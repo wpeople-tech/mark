@@ -23,7 +23,7 @@ Set up the MARK Intelligence Next.js 16 project foundation: environment variable
 
 Variables:
 ```
-ANTHROPIC_API_KEY=
+OPENROUTER_API_KEY=
 GITHUB_TOKEN=
 UPSTASH_REDIS_REST_URL=
 UPSTASH_REDIS_REST_TOKEN=
@@ -85,7 +85,7 @@ None for this phase. All styling deps already in `package.json`:
 - `tailwindcss@^4`, `@tailwindcss/postcss@^4`
 - `typescript@^5`, `@types/node`, `@types/react`, `@types/react-dom`
 
-Core packages (`@anthropic-ai/sdk`, `@upstash/ratelimit`, `@upstash/redis`, `fflate`) will be added in the next phase when lib modules are implemented.
+Core packages (`openai`, `@upstash/ratelimit`, `@upstash/redis`, `fflate`) will be added in the next phase when lib modules are implemented.
 
 ## Files Changed/Created (total: 5)
 

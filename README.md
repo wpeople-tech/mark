@@ -296,7 +296,7 @@ markintel.xyz/               ← Single Vercel Project
 │   ├── detectStack.ts       ← stack keyword scoring
 │   ├── selectSkills.ts      ← top 6-8 skill selector dari 59 skills
 │   ├── buildZip.ts          ← fflate ZIP builder
-│   ├── claude.ts            ← Anthropic SDK + retry logic
+│   ├── llm.ts             ← OpenRouter + retry logic
 │   └── rateLimit.ts         ← Upstash Redis sliding window
 ├── public/
 │   ├── og-image.png         ← 1200×630px untuk Twitter/OG sharing
@@ -315,7 +315,7 @@ markintel.xyz/               ← Single Vercel Project
     "next": "14.x",
     "react": "18.x",
     "react-dom": "18.x",
-    "@anthropic-ai/sdk": "latest",
+    "openai": "latest",
     "@upstash/ratelimit": "latest",
     "@upstash/redis": "latest",
     "fflate": "latest"
@@ -336,8 +336,8 @@ markintel.xyz/               ← Single Vercel Project
 ```env
 # .env.local — JANGAN commit ke git
 
-# Anthropic
-ANTHROPIC_API_KEY=sk-ant-...
+# OpenRouter
+OPENROUTER_API_KEY=sk-or-...
 
 # GitHub (optional tapi sangat disarankan)
 # Tanpa token: 60 req/hr. Dengan token: 5000 req/hr
@@ -427,12 +427,15 @@ export async function checkRateLimit(ip: string): Promise<{
 }
 ```
 
-### 5.7 lib/claude.ts
+### 5.7 lib/llm.ts
 
 ```typescript
-import Anthropic from '@anthropic-ai/sdk'
+import OpenAI from 'openai'
 
-const client = new Anthropic()
+const client = new OpenAI({
+  baseURL: 'https://openrouter.ai/api/v1',
+  apiKey: process.env.OPENROUTER_API_KEY,
+})
 
 export const MARK_SYSTEM_PROMPT = `You are MARK, a GitHub repository intelligence engine.
 
@@ -498,22 +501,20 @@ async function callWithRetry<T>(
 
 export function streamMarkFile(context: string, tags: string[], skills: string[]) {
   return callWithRetry(() =>
-    client.messages.stream({
-      model: 'claude-sonnet-4-6',
+    client.chat.completions.create({
+      model: 'poolside/laguna-m.1:free',
       max_tokens: 4000,
-      system: [
-        {
-          type: 'text',
-          text: MARK_SYSTEM_PROMPT,
-          cache_control: { type: 'ephemeral' }, // cache 5 menit — hemat ~90% input cost
-        },
-      ],
       messages: [
+        {
+          role: 'system',
+          content: MARK_SYSTEM_PROMPT,
+        },
         {
           role: 'user',
           content: `Stack detected: ${tags.join(', ')}\nSelected skills: ${skills.join(', ')}\n\nManifest content:\n${context}`,
         },
       ],
+      stream: true,
     })
   )
 }
@@ -524,11 +525,14 @@ export async function generateOpportunities(
   stack: string[]
 ): Promise<any[]> {
   const response = await callWithRetry(() =>
-    client.messages.create({
-      model: 'claude-sonnet-4-6',
+    client.chat.completions.create({
+      model: 'poolside/laguna-m.1:free',
       max_tokens: 1500,
-      system: OPPORTUNITIES_SYSTEM_PROMPT,
       messages: [
+        {
+          role: 'system',
+          content: OPPORTUNITIES_SYSTEM_PROMPT,
+        },
         {
           role: 'user',
           content: `Repo: ${repoName}\nStack: ${stack.join(', ')}\n\nMARK File:\n${markFile.slice(0, 3000)}`,
@@ -537,8 +541,7 @@ export async function generateOpportunities(
     })
   )
 
-  const raw =
-    response.content[0].type === 'text' ? response.content[0].text : '[]'
+  const raw = response.choices[0]?.message?.content ?? '[]'
 
   try {
     return JSON.parse(raw.trim())
@@ -843,7 +846,7 @@ import { checkRateLimit } from '@/lib/rateLimit'
 import { packRepo } from '@/lib/github'
 import { detectStack } from '@/lib/detectStack'
 import { selectSkills } from '@/lib/selectSkills'
-import { streamMarkFile } from '@/lib/claude'
+import { streamMarkFile } from '@/lib/llm'
 import { buildZip } from '@/lib/buildZip'
 
 export const runtime = 'nodejs'  // WAJIB — fflate butuh Node, bukan Edge
@@ -911,9 +914,10 @@ export async function POST(req: NextRequest) {
         const claudeStream = await streamMarkFile(context, tags, skills)
 
         let fullContent = ''
-        for await (const text of claudeStream.textStream) {
+        for await (const chunk of claudeStream) {
+          const text = chunk.choices[0]?.delta?.content ?? ''
           fullContent += text
-          send({ type: 'content', text })
+          if (text) send({ type: 'content', text })
         }
 
         // Phase 5: ZIP
@@ -950,7 +954,7 @@ export async function POST(req: NextRequest) {
 
 ```typescript
 import { NextRequest, NextResponse } from 'next/server'
-import { generateOpportunities } from '@/lib/claude'
+import { generateOpportunities } from '@/lib/llm'
 
 export const runtime = 'nodejs'
 
