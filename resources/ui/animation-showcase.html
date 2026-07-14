@@ -1,0 +1,1704 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MARK Intelligence — Animation Showcase</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    :root {
+      --ink: #0F0F0E;
+      --paper: #F7F6F3;
+      --surface: #EFEFEB;
+      --border: #E5E3DC;
+      --muted: #888785;
+      --accent: #1A47A8;
+      --accent-bg: #EBF2FF;
+      --accent-border: #C3D7F7;
+      --green: #1B6B28;
+      --green-bg: #E9F5E9;
+      --green-border: #B6DEB9;
+      --term-bg: #0B0B0A;
+      --tg: #6DBE8A;
+      --tb: #7DAEEA;
+      --ty: #E8C56A;
+      --td: #444;
+      --tw: #E8E6E0;
+      --sans: 'Geist', system-ui, sans-serif;
+      --mono: 'Geist Mono', monospace;
+    }
+
+    body {
+      font-family: var(--sans);
+      background: #E8E7E3;
+      color: var(--ink);
+      padding: 2rem 1rem
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -.04em;
+      margin-bottom: .25rem
+    }
+
+    .page-sub {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 3rem
+    }
+
+    .anim-block {
+      background: var(--paper);
+      border: .5px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 2.5rem
+    }
+
+    .anim-header {
+      padding: 1rem 1.5rem;
+      border-bottom: .5px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: .5rem
+    }
+
+    .anim-num {
+      font-size: 10px;
+      font-family: var(--mono);
+      color: var(--muted);
+      letter-spacing: .08em
+    }
+
+    .anim-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink)
+    }
+
+    .anim-section {
+      font-size: 11px;
+      color: var(--accent);
+      background: var(--accent-bg);
+      border: .5px solid var(--accent-border);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: var(--mono)
+    }
+
+    .anim-body {
+      padding: 2rem 1.5rem
+    }
+
+    .anim-note {
+      padding: .75rem 1.5rem;
+      border-top: .5px solid var(--border);
+      background: var(--surface);
+      font-size: 11px;
+      color: var(--muted);
+      font-family: var(--mono);
+      line-height: 1.6
+    }
+
+    .replay-btn {
+      margin-top: 1rem;
+      font-size: 12px;
+      padding: 7px 16px;
+      border-radius: 6px;
+      background: var(--ink);
+      color: var(--paper);
+      border: none;
+      cursor: pointer;
+      font-family: var(--sans)
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>MARK Intelligence — Animation Showcase</h1>
+  <p class="page-sub">5 animasi sebagai visual reference untuk Fable 5 + brief integrasi untuk dev.</p>
+
+  <!-- ANIM 01: STATS COUNTER -->
+  <div class="anim-block">
+    <div class="anim-header">
+      <div>
+        <div class="anim-num">ANIM 01 · PRIORITY HIGH</div>
+        <div class="anim-title">Stats Counter — Count Up on Scroll</div>
+      </div>
+      <div class="anim-section">Stats Strip</div>
+    </div>
+    <div class="anim-body">
+      <style>
+        .stats-demo {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          border: .5px solid var(--border);
+          border-radius: 10px;
+          overflow: hidden;
+          background: #fff
+        }
+
+        .sd-stat {
+          padding: 1.25rem;
+          text-align: center;
+          border-right: .5px solid var(--border)
+        }
+
+        .sd-stat:last-child {
+          border-right: none
+        }
+
+        .sd-n {
+          font-size: 28px;
+          font-weight: 700;
+          letter-spacing: -.04em;
+          color: var(--ink);
+          display: block;
+          font-family: var(--mono)
+        }
+
+        .sd-l {
+          font-size: 11px;
+          color: var(--muted);
+          margin-top: 3px;
+          display: block
+        }
+      </style>
+      <div class="stats-demo">
+        <div class="sd-stat"><span class="sd-n" id="c0">0s</span><span class="sd-l">avg scan time</span></div>
+        <div class="sd-stat"><span class="sd-n" id="c1">0</span><span class="sd-l">skill patterns</span></div>
+        <div class="sd-stat"><span class="sd-n" id="c2">0</span><span class="sd-l">ideas per repo</span></div>
+        <div class="sd-stat"><span class="sd-n" id="c3">0</span><span class="sd-l">logins needed</span></div>
+      </div>
+      <button class="replay-btn" onclick="runCounters()">↺ Replay animation</button>
+      <script>
+        function easeOut(t) { return 1 - Math.pow(1 - t, 3) }
+        function countUp(el, target, suffix, dur) {
+          if (target === 0) { el.textContent = '0' + (suffix || ''); return }
+          const s = performance.now()
+          function step(now) {
+            const p = Math.min((now - s) / dur, 1)
+            el.textContent = Math.round(easeOut(p) * target) + (suffix || '')
+            if (p < 1) requestAnimationFrame(step)
+          }
+          requestAnimationFrame(step)
+        }
+        function runCounters() {
+          countUp(document.getElementById('c0'), 30, 's', 1800)
+          setTimeout(() => countUp(document.getElementById('c1'), 59, '', 2000), 80)
+          setTimeout(() => countUp(document.getElementById('c2'), 3, '', 1200), 160)
+        }
+        runCounters()
+      </script>
+    </div>
+    <div class="anim-note">Behavior: angka count dari 0 ke target saat masuk viewport pertama kali
+      (IntersectionObserver, fire-once). Easing: easeOutCubic. Duration: 1.8-2s per angka. "0 logins" tidak perlu
+      animate. Vanilla JS, zero library.</div>
+  </div>
+
+  <!-- ANIM 02: FEATURE TABS -->
+  <div class="anim-block">
+    <div class="anim-header">
+      <div>
+        <div class="anim-num">ANIM 02 · PRIORITY HIGH</div>
+        <div class="anim-title">Feature Tab Demo — Scan → Mark File → Build Ideas</div>
+      </div>
+      <div class="anim-section">Demo Section</div>
+    </div>
+    <div class="anim-body">
+      <style>
+        .ftabs2 {
+          display: flex;
+          border: .5px solid var(--border);
+          border-radius: 8px;
+          max-width: 380px;
+          background: #fff;
+          overflow: hidden;
+          margin-bottom: .75rem
+        }
+
+        .ftab2 {
+          flex: 1;
+          padding: .5rem;
+          text-align: center;
+          font-size: 11px;
+          font-weight: 500;
+          color: var(--muted);
+          cursor: pointer;
+          border-right: .5px solid var(--border);
+          transition: all .2s
+        }
+
+        .ftab2:last-child {
+          border-right: none
+        }
+
+        .ftab2.on {
+          background: var(--ink);
+          color: var(--paper)
+        }
+
+        .ftab2-n {
+          display: block;
+          font-size: 9px;
+          font-family: var(--mono);
+          margin-bottom: 1px;
+          opacity: .55
+        }
+
+        .tprog {
+          height: 2px;
+          background: var(--border);
+          border-radius: 99px;
+          max-width: 380px;
+          margin-bottom: 1rem;
+          overflow: hidden
+        }
+
+        .tprog-f {
+          height: 100%;
+          background: var(--ink);
+          width: 0;
+          border-radius: 99px
+        }
+
+        .fp2 {
+          display: none;
+          animation: fpIn .45s cubic-bezier(.16, 1, .3, 1) both
+        }
+
+        .fp2.on {
+          display: block
+        }
+
+        @keyframes fpIn {
+          from {
+            opacity: 0;
+            transform: translateY(10px)
+          }
+
+          to {
+            opacity: 1;
+            transform: translateY(0)
+          }
+        }
+
+        /* Scan mock */
+        .scan-m {
+          background: #fff;
+          border: .5px solid var(--border);
+          border-radius: 10px;
+          overflow: hidden
+        }
+
+        .scan-bar2 {
+          background: var(--surface);
+          border-bottom: .5px solid var(--border);
+          padding: .375rem .625rem;
+          display: flex;
+          align-items: center;
+          gap: .375rem
+        }
+
+        .sdots2 {
+          display: flex;
+          gap: 3px
+        }
+
+        .sd2 {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%
+        }
+
+        .sdr {
+          background: #FF6057
+        }
+
+        .sdy {
+          background: #FFBD2E
+        }
+
+        .sdg {
+          background: #28CA40
+        }
+
+        .surl2 {
+          flex: 1;
+          background: #fff;
+          border: .5px solid var(--border);
+          border-radius: 4px;
+          padding: 2px 7px;
+          font-size: 9px;
+          font-family: var(--mono);
+          color: var(--muted)
+        }
+
+        .mext2 {
+          width: 18px;
+          height: 18px;
+          border-radius: 3px;
+          background: var(--ink);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 8px;
+          font-weight: 700;
+          color: var(--paper)
+        }
+
+        .scan-c {
+          height: 130px;
+          background: var(--paper);
+          padding: .5rem;
+          display: flex;
+          gap: .5rem;
+          position: relative
+        }
+
+        .sg-s {
+          width: 100px;
+          background: #fff;
+          border: .5px solid var(--border);
+          border-radius: 5px;
+          padding: .375rem;
+          flex-shrink: 0
+        }
+
+        .sg-nm {
+          font-size: 9px;
+          font-weight: 600;
+          color: var(--accent);
+          font-family: var(--mono);
+          margin-bottom: 2px
+        }
+
+        .sg-mt {
+          font-size: 8px;
+          color: var(--muted);
+          font-family: var(--mono);
+          line-height: 1.7
+        }
+
+        .sg-fl {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 3px
+        }
+
+        .sg-f {
+          font-size: 8px;
+          font-family: var(--mono);
+          color: var(--muted);
+          padding: 2px 5px;
+          border-radius: 3px;
+          display: flex;
+          align-items: center;
+          gap: 4px
+        }
+
+        .sg-f.hi {
+          background: var(--accent-bg);
+          color: var(--accent)
+        }
+
+        .ep2 {
+          position: absolute;
+          top: 5px;
+          right: 5px;
+          width: 132px;
+          background: var(--paper);
+          border: .5px solid var(--border);
+          border-radius: 7px;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, .12);
+          overflow: hidden;
+          transform: scale(.82) translateY(-6px);
+          opacity: 0;
+          transition: all .4s cubic-bezier(.16, 1, .3, 1);
+          transform-origin: top right
+        }
+
+        .ep2.open {
+          transform: scale(1) translateY(0);
+          opacity: 1
+        }
+
+        .eph {
+          padding: .3rem .45rem;
+          border-bottom: .5px solid var(--border);
+          display: flex;
+          justify-content: space-between;
+          align-items: center
+        }
+
+        .epl {
+          font-size: 9px;
+          font-weight: 700;
+          display: flex;
+          align-items: center;
+          gap: 3px
+        }
+
+        .epd {
+          width: 5px;
+          height: 5px;
+          border-radius: 50%;
+          background: var(--accent);
+          animation: epblink 2s infinite
+        }
+
+        @keyframes epblink {
+
+          0%,
+          100% {
+            opacity: 1
+          }
+
+          50% {
+            opacity: .2
+          }
+        }
+
+        .epr {
+          font-size: 7px;
+          font-family: var(--mono);
+          color: var(--muted)
+        }
+
+        .epg {
+          height: 36px;
+          background: var(--surface);
+          position: relative;
+          overflow: hidden
+        }
+
+        .epc-area {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 3px;
+          flex-wrap: wrap;
+          padding: 3px
+        }
+
+        .epc {
+          font-size: 7px;
+          font-family: var(--mono);
+          padding: 1px 5px;
+          border-radius: 99px;
+          background: rgba(247, 246, 243, .9);
+          border: .5px solid rgba(229, 227, 220, .9);
+          opacity: 0;
+          transition: opacity .3s
+        }
+
+        .epc.show {
+          opacity: 1
+        }
+
+        .epc.ac {
+          background: rgba(235, 242, 255, .9);
+          color: var(--accent);
+          border-color: rgba(195, 215, 247, .9)
+        }
+
+        .ept {
+          background: var(--term-bg);
+          padding: .3rem .45rem;
+          font-family: var(--mono);
+          font-size: 7.5px;
+          line-height: 1.8;
+          min-height: 32px
+        }
+
+        .etlp {
+          opacity: 0;
+          transition: opacity .25s
+        }
+
+        .etlp.show {
+          opacity: 1
+        }
+
+        .edp {
+          color: #3a3a38
+        }
+
+        .ewp {
+          color: var(--tw)
+        }
+
+        .ebp {
+          color: var(--tb)
+        }
+
+        .egp {
+          color: var(--tg)
+        }
+
+        /* MF mock */
+        .mf-m {
+          background: #fff;
+          border: .5px solid var(--border);
+          border-radius: 10px;
+          overflow: hidden
+        }
+
+        .mfhm {
+          background: var(--ink);
+          padding: .5rem .75rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: center
+        }
+
+        .mfhmt {
+          font-size: 10px;
+          font-weight: 600;
+          color: var(--paper);
+          font-family: var(--mono);
+          display: flex;
+          align-items: center;
+          gap: 5px
+        }
+
+        .mfhmd {
+          width: 5px;
+          height: 5px;
+          border-radius: 50%;
+          background: var(--tg)
+        }
+
+        .mfhmb {
+          display: flex;
+          gap: 4px
+        }
+
+        .mfhmb span {
+          font-size: 8px;
+          font-family: var(--mono);
+          padding: 1px 5px;
+          border-radius: 3px
+        }
+
+        .bgb {
+          background: rgba(125, 174, 234, .15);
+          color: var(--tb);
+          border: .5px solid rgba(125, 174, 234, .3)
+        }
+
+        .bgg {
+          background: rgba(109, 190, 138, .15);
+          color: var(--tg);
+          border: .5px solid rgba(109, 190, 138, .3)
+        }
+
+        .mfbm {
+          background: var(--term-bg);
+          padding: .5rem .75rem;
+          font-family: var(--mono);
+          font-size: 9px;
+          line-height: 1.9;
+          min-height: 130px
+        }
+
+        .mflm {
+          opacity: 0;
+          transform: translateX(-3px);
+          transition: all .25s
+        }
+
+        .mflm.show {
+          opacity: 1;
+          transform: translateX(0)
+        }
+
+        .mc1 {
+          color: #fff;
+          font-weight: 600
+        }
+
+        .mc2 {
+          color: var(--ty)
+        }
+
+        .mc3 {
+          color: var(--tb)
+        }
+
+        .mc4 {
+          color: var(--tw)
+        }
+
+        .mc5 {
+          color: #3a3a38
+        }
+
+        /* Ideas */
+        .iv2 {
+          display: flex;
+          flex-direction: column;
+          gap: 8px
+        }
+
+        .ivc {
+          border: .5px solid var(--border);
+          border-radius: 8px;
+          padding: .625rem .75rem;
+          background: #fff;
+          opacity: 0;
+          transform: translateX(16px);
+          transition: all .45s cubic-bezier(.16, 1, .3, 1)
+        }
+
+        .ivc.show {
+          opacity: 1;
+          transform: translateX(0)
+        }
+
+        .ivct {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 3px
+        }
+
+        .ivcn {
+          font-size: 11px;
+          font-weight: 600;
+          color: var(--ink)
+        }
+
+        .ivctk {
+          font-size: 9px;
+          font-family: var(--mono);
+          color: var(--accent);
+          background: var(--accent-bg);
+          border: .5px solid var(--accent-border);
+          padding: 1px 6px;
+          border-radius: 3px
+        }
+
+        .ivcd {
+          font-size: 10px;
+          color: var(--muted);
+          line-height: 1.5
+        }
+
+        .ivcb {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-top: 4px
+        }
+
+        .ivcp {
+          font-size: 9px;
+          color: var(--green);
+          background: var(--green-bg);
+          border: .5px solid var(--green-border);
+          padding: 1px 6px;
+          border-radius: 3px
+        }
+
+        .ivce {
+          font-size: 9px;
+          font-family: var(--mono);
+          color: var(--muted)
+        }
+
+        .ivf {
+          margin-top: 6px;
+          padding: .5rem .625rem;
+          background: var(--surface);
+          border: .5px solid var(--border);
+          border-radius: 6px;
+          font-size: 10px;
+          color: var(--muted);
+          text-align: center;
+          opacity: 0;
+          transition: opacity .3s .8s
+        }
+
+        .ivf.show {
+          opacity: 1
+        }
+
+        .ivf strong {
+          color: var(--ink)
+        }
+      </style>
+      <div class="ftabs2">
+        <div class="ftab2 on" onclick="sft(0)"><span class="ftab2-n">01</span>Scan</div>
+        <div class="ftab2" onclick="sft(1)"><span class="ftab2-n">02</span>Mark File</div>
+        <div class="ftab2" onclick="sft(2)"><span class="ftab2-n">03</span>Build Ideas</div>
+      </div>
+      <div class="tprog">
+        <div class="tprog-f" id="tpf2"></div>
+      </div>
+      <!-- Panel 0 -->
+      <div class="fp2 on" id="p0">
+        <div class="scan-m">
+          <div class="scan-bar2">
+            <div class="sdots2">
+              <div class="sd2 sdr"></div>
+              <div class="sd2 sdy"></div>
+              <div class="sd2 sdg"></div>
+            </div>
+            <div class="surl2">github.com/ggerganov/whisper.cpp</div>
+            <div class="mext2">M</div>
+          </div>
+          <div class="scan-c">
+            <div class="sg-s">
+              <div class="sg-nm">whisper.cpp</div>
+              <div class="sg-mt">⭐ 38.2k<br>C++ · MIT</div>
+            </div>
+            <div class="sg-fl">
+              <div class="sg-f hi">📄 CMakeLists.txt</div>
+              <div class="sg-f">📄 whisper.h</div>
+              <div class="sg-f">📦 bindings/</div>
+              <div class="sg-f">📄 requirements.txt</div>
+            </div>
+            <div class="ep2" id="ep2">
+              <div class="eph">
+                <div class="epl">
+                  <div class="epd"></div>MARK
+                </div>
+                <div class="epr">whisper.cpp</div>
+              </div>
+              <div class="epg">
+                <canvas id="epc2" style="position:absolute;inset:0;width:100%;height:100%"></canvas>
+                <div class="epc-area">
+                  <div class="epc" id="ch0">C++</div>
+                  <div class="epc" id="ch1">Python</div>
+                  <div class="epc" id="ch2">CMake</div>
+                  <div class="epc ac" id="ch3">6 skills</div>
+                </div>
+              </div>
+              <div class="ept" id="epterm2">
+                <div class="etlp" id="etl0"><span class="edp">▸</span><span class="ewp">scanning...</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Panel 1 -->
+      <div class="fp2" id="p1">
+        <div class="mf-m">
+          <div class="mfhm">
+            <div class="mfhmt">
+              <div class="mfhmd"></div>CLAUDE.md
+            </div>
+            <div class="mfhmb"><span class="bgb">whisper.cpp</span><span class="bgg">generated ✓</span></div>
+          </div>
+          <div class="mfbm" id="mfbody2"></div>
+        </div>
+      </div>
+      <!-- Panel 2 -->
+      <div class="fp2" id="p2">
+        <div class="iv2">
+          <div class="ivc" id="iv0">
+            <div class="ivct"><span class="ivcn">SpacesTranscribe.xyz</span><span class="ivctk">$SPACES</span></div>
+            <div class="ivcd">Transcribe any Twitter Space in 60s using whisper.cpp as the engine</div>
+            <div class="ivcb"><span class="ivcp">pump.fun viable ✓</span><span class="ivce">~4 days</span></div>
+          </div>
+          <div class="ivc" id="iv1">
+            <div class="ivct"><span class="ivcn">VoiceMark.xyz</span><span class="ivctk">$VOICE</span></div>
+            <div class="ivcd">Voice memo → CLAUDE.md context. Every Claude Code user is potential holder</div>
+            <div class="ivcb"><span class="ivcp">pump.fun viable ✓</span><span class="ivce">~3 days</span></div>
+          </div>
+          <div class="ivc" id="iv2i">
+            <div class="ivct"><span class="ivcn">PodcastBrief.xyz</span><span class="ivctk">$BRIEF</span></div>
+            <div class="ivcd">Auto-clip alpha drops from crypto podcasts. Feed wallets, not just degens</div>
+            <div class="ivcb"><span class="ivcp">pump.fun viable ✓</span><span class="ivce">~5 days</span></div>
+          </div>
+        </div>
+        <div class="ivf" id="ivft">From <strong>ggerganov/whisper.cpp</strong> — generated in 28 seconds</div>
+      </div>
+      <script>
+        const DUR2 = [7000, 6000, 5000]
+        let ft2Timer = null, epa2 = null, ft2Cur = 0, st2 = []
+        function sft(i) {
+          clearTimeout(ft2Timer); cancelAnimationFrame(epa2); st2.forEach(clearTimeout); st2 = []
+          document.querySelectorAll('.ftab2').forEach((t, j) => t.classList.toggle('on', j === i))
+          document.querySelectorAll('.fp2').forEach((p, j) => p.classList.toggle('on', j === i))
+          ft2Cur = i
+          resetScan2(); resetMF2(); resetIdeas2()
+          if (i === 0) runScan2()
+          if (i === 1) runMF2()
+          if (i === 2) runIdeas2()
+          startProg2(DUR2[i])
+          ft2Timer = setTimeout(() => sft((i + 1) % 3), DUR2[i])
+        }
+        function startProg2(d) {
+          const f = document.getElementById('tpf2')
+          f.style.transition = 'none'; f.style.width = '0%'
+          requestAnimationFrame(() => { f.style.transition = `width ${d}ms linear`; f.style.width = '100%' })
+        }
+        function st(fn, ms) { const id = setTimeout(fn, ms); st2.push(id) }
+        /* Scan */
+        function resetScan2() {
+          document.getElementById('ep2').classList.remove('open')
+          document.getElementById('epterm2').innerHTML = '<div class="etlp" id="etl0"><span class="edp">▸</span><span class="ewp">scanning...</span></div>'
+            ;['ch0', 'ch1', 'ch2', 'ch3'].forEach(id => document.getElementById(id)?.classList.remove('show'))
+        }
+        const epLines2 = [{ d: 900, c: 'ebp', t: '→ C++ · Python · CMake' }, { d: 1700, c: 'ebp', t: '→ speech inference' }, { d: 2600, c: 'egp', t: '→ 6 skills matched ✓' }]
+        function runScan2() {
+          initEpc2()
+          st(() => document.getElementById('ep2').classList.add('open'), 400)
+          epLines2.forEach(l => st(() => {
+            const d = document.createElement('div'); d.className = 'etlp'
+            d.innerHTML = `<span class="edp">·</span><span class="${l.c}">${l.t}</span>`
+            document.getElementById('epterm2').appendChild(d)
+            requestAnimationFrame(() => requestAnimationFrame(() => d.classList.add('show')))
+          }, l.d))
+            ;[['ch0', 800], ['ch1', 1500], ['ch2', 2200], ['ch3', 3000]].forEach(([id, d]) =>
+              st(() => document.getElementById(id)?.classList.add('show'), d))
+        }
+        function initEpc2() {
+          const cv = document.getElementById('epc2'); if (!cv) return
+          const z = cv.parentElement; cv.width = z.offsetWidth; cv.height = z.offsetHeight
+          const ctx = cv.getContext('2d'), W = () => cv.width, H = () => cv.height
+          const bl = [{ x: .45, y: .5, r: .38, px: 2, py: 1.5, ph: 0 }, { x: .65, y: .38, r: .26, px: 1.6, py: 2, ph: 1.8 }, { x: .28, y: .65, r: .2, px: 2.3, py: 1.2, ph: 3 }]
+          let et = 0
+            ; (function draw() {
+              ctx.clearRect(0, 0, W(), H())
+              bl.forEach(b => {
+                const bx = (b.x + Math.sin(et * .012 * b.px + b.ph) * .15) * W()
+                const by = (b.y + Math.cos(et * .012 * b.py + b.ph) * .12) * H()
+                const br = b.r * Math.min(W(), H())
+                const g = ctx.createRadialGradient(bx - br * .2, by - br * .2, br * .04, bx, by, br * 1.15)
+                g.addColorStop(0, 'rgba(255,254,252,.52)'); g.addColorStop(.4, 'rgba(242,240,234,.28)'); g.addColorStop(1, 'rgba(200,198,192,0)')
+                ctx.fillStyle = g; ctx.beginPath(); ctx.arc(bx, by, br * 1.05, 0, Math.PI * 2); ctx.fill()
+                const sh = ctx.createLinearGradient(bx - br * .5, by - br * .5, bx + br * .2, by + br * .2)
+                sh.addColorStop(0, 'rgba(255,255,255,.4)'); sh.addColorStop(.4, 'rgba(255,255,255,.12)'); sh.addColorStop(1, 'rgba(255,255,255,0)')
+                ctx.fillStyle = sh; ctx.beginPath(); ctx.arc(bx, by, br * .62, 0, Math.PI * 2); ctx.fill()
+              })
+              et++; epa2 = requestAnimationFrame(draw)
+            })()
+        }
+        /* MF */
+        const mfL2 = [
+          { c: 'mc5', t: '# Generated by MARK Intelligence' }, { c: 'mc1', t: '# CLAUDE.md — whisper.cpp' },
+          { c: 'mc5', t: '' }, { c: 'mc2', t: '## Project Overview' }, { c: 'mc4', t: 'C++ port of OpenAI Whisper.' },
+          { c: 'mc4', t: 'Core: speech-to-text inference.' }, { c: 'mc5', t: '' }, { c: 'mc2', t: '## Tech Stack' },
+          { c: '', t: '<span class="mc3">Language:</span> <span class="mc4">C++17, Python</span>' },
+          { c: '', t: '<span class="mc3">Build:</span> <span class="mc4">CMake 3.17+</span>' },
+          { c: '', t: '<span class="mc3">Backends:</span> <span class="mc4">Metal · CUDA · WASM</span>' },
+          { c: 'mc5', t: '' }, { c: 'mc2', t: '## Selected Skills (6/59)' },
+          { c: 'mc3', t: 'cpp-inference, audio-processing,' }, { c: 'mc3', t: 'cross-platform-build, wasm-deploy' },
+        ]
+        function resetMF2() { document.getElementById('mfbody2').innerHTML = '' }
+        function runMF2() {
+          const b = document.getElementById('mfbody2')
+          mfL2.forEach((l, i) => st(() => {
+            const d = document.createElement('div'); d.className = 'mflm ' + (l.c || '')
+            d.innerHTML = l.t; b.appendChild(d)
+            requestAnimationFrame(() => requestAnimationFrame(() => d.classList.add('show')))
+          }, 100 + i * 160))
+        }
+        /* Ideas */
+        function resetIdeas2() {
+          ;['iv0', 'iv1', 'iv2i'].forEach(id => document.getElementById(id)?.classList.remove('show'))
+          document.getElementById('ivft')?.classList.remove('show')
+        }
+        function runIdeas2() {
+          st(() => document.getElementById('iv0')?.classList.add('show'), 200)
+          st(() => document.getElementById('iv1')?.classList.add('show'), 650)
+          st(() => document.getElementById('iv2i')?.classList.add('show'), 1100)
+          st(() => document.getElementById('ivft')?.classList.add('show'), 1800)
+        }
+        sft(0)
+      </script>
+    </div>
+    <div class="anim-note">Behavior: 3 tab auto-advance (7s→6s→5s→loop). User bisa klik manual. Progress bar countdown
+      di bawah tabs. Tiap panel: Scan=popup+liquid glass+terminal stream, MF=CLAUDE.md lines reveal, Ideas=cards slide
+      in satu per satu.</div>
+  </div>
+
+  <!-- ANIM 03: HOW IT WORKS ICONS -->
+  <div class="anim-block">
+    <div class="anim-header">
+      <div>
+        <div class="anim-num">ANIM 03 · PRIORITY MEDIUM</div>
+        <div class="anim-title">How It Works — Animated Step Icons</div>
+      </div>
+      <div class="anim-section">How It Works</div>
+    </div>
+    <div class="anim-body">
+      <style>
+        .how-demo {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 1.5rem
+        }
+
+        .hd-step {
+          text-align: center;
+          padding: 1.5rem 1rem
+        }
+
+        .hd-num {
+          font-size: 10px;
+          font-family: var(--mono);
+          color: var(--muted);
+          margin-bottom: .75rem;
+          display: block
+        }
+
+        .hd-icon {
+          width: 52px;
+          height: 52px;
+          border-radius: 12px;
+          background: var(--ink);
+          margin: 0 auto .875rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+          overflow: hidden
+        }
+
+        .hd-title {
+          font-size: 14px;
+          font-weight: 600;
+          color: var(--ink);
+          margin-bottom: .25rem
+        }
+
+        .hd-desc {
+          font-size: 12px;
+          color: var(--muted);
+          line-height: 1.6
+        }
+
+        .hd-icon svg {
+          width: 22px;
+          height: 22px;
+          stroke: #fff;
+          fill: none;
+          stroke-width: 1.5;
+          stroke-linecap: round;
+          stroke-linejoin: round
+        }
+
+        .scan-sw {
+          position: absolute;
+          left: 0;
+          right: 0;
+          height: 2px;
+          background: linear-gradient(90deg, transparent, rgba(26, 71, 168, .9), transparent);
+          top: -2px;
+          animation: swDown 2.4s ease-in-out infinite
+        }
+
+        @keyframes swDown {
+          0% {
+            top: -2px;
+            opacity: 0
+          }
+
+          10% {
+            opacity: 1
+          }
+
+          90% {
+            opacity: 1
+          }
+
+          100% {
+            top: 100%;
+            opacity: 0
+          }
+        }
+
+        .mag-ic svg {
+          animation: magZ 2s ease-in-out infinite
+        }
+
+        @keyframes magZ {
+
+          0%,
+          100% {
+            transform: scale(1)
+          }
+
+          50% {
+            transform: scale(1.2) rotate(8deg)
+          }
+        }
+
+        .mag-ic::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          border-radius: 12px;
+          animation: magP 2s ease-in-out infinite
+        }
+
+        @keyframes magP {
+
+          0%,
+          100% {
+            box-shadow: 0 0 0 0 rgba(109, 190, 138, 0)
+          }
+
+          50% {
+            box-shadow: 0 0 0 8px rgba(109, 190, 138, .15)
+          }
+        }
+
+        .rkt-ic svg {
+          animation: rktF 2s ease-in-out infinite
+        }
+
+        @keyframes rktF {
+
+          0%,
+          100% {
+            transform: translateY(0) rotate(-45deg)
+          }
+
+          50% {
+            transform: translateY(-5px) rotate(-45deg)
+          }
+        }
+
+        .rkt-trail {
+          position: absolute;
+          bottom: 8px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 2px;
+          border-radius: 1px;
+          background: linear-gradient(to bottom, rgba(232, 197, 106, .9), transparent);
+          animation: rktT 2s ease-in-out infinite
+        }
+
+        @keyframes rktT {
+
+          0%,
+          100% {
+            height: 0;
+            opacity: 0;
+            bottom: 14px
+          }
+
+          30% {
+            opacity: .8
+          }
+
+          50% {
+            height: 12px;
+            opacity: .6;
+            bottom: 9px
+          }
+
+          100% {
+            height: 0;
+            opacity: 0
+          }
+        }
+      </style>
+      <div class="how-demo">
+        <div class="hd-step">
+          <span class="hd-num">01</span>
+          <div class="hd-icon">
+            <div class="scan-sw"></div>
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
+            </svg>
+          </div>
+          <div class="hd-title">Open any repo</div>
+          <div class="hd-desc">Navigate to any public GitHub repo. Any stack, any language, any size.</div>
+        </div>
+        <div class="hd-step">
+          <span class="hd-num">02</span>
+          <div class="hd-icon mag-ic">
+            <svg viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.35-4.35" />
+            </svg>
+          </div>
+          <div class="hd-title">Click MARK</div>
+          <div class="hd-desc">Extension reads manifest, detects stack, scores 59 skill patterns.</div>
+        </div>
+        <div class="hd-step">
+          <span class="hd-num">03</span>
+          <div class="hd-icon rkt-ic">
+            <div class="rkt-trail"></div>
+            <svg viewBox="0 0 24 24">
+              <path d="M22 2 11 13M22 2 15 22l-4-9-9-4 20-7z" />
+            </svg>
+          </div>
+          <div class="hd-title">Get ideas + launch</div>
+          <div class="hd-desc">Download ZIP. Ship the website. Launch the token. Repeat.</div>
+        </div>
+      </div>
+    </div>
+    <div class="anim-note">Behavior: pure CSS keyframe, loop infinite. Icon 01: scan-line sweep biru vertikal. Icon 02:
+      zoom pulse + outer glow hijau. Icon 03: rocket float + yellow particle trail. Trigger via IntersectionObserver —
+      add/remove class 'animating' saat section masuk/keluar viewport.</div>
+  </div>
+
+  <!-- ANIM 04: FEATURES GRID HOVER -->
+  <div class="anim-block">
+    <div class="anim-header">
+      <div>
+        <div class="anim-num">ANIM 04 · PRIORITY MEDIUM</div>
+        <div class="anim-title">Features Grid — Hover Mini Animation per Cell</div>
+      </div>
+      <div class="anim-section">Features Grid</div>
+    </div>
+    <div class="anim-body">
+      <style>
+        .fg2 {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 1px;
+          background: var(--border);
+          border: .5px solid var(--border);
+          border-radius: 12px;
+          overflow: hidden
+        }
+
+        .fc {
+          background: var(--paper);
+          padding: 1.5rem 1.25rem;
+          transition: background .2s;
+          cursor: default;
+          position: relative;
+          overflow: hidden
+        }
+
+        .fc:hover {
+          background: #fff
+        }
+
+        .fi {
+          width: 36px;
+          height: 36px;
+          border-radius: 8px;
+          background: var(--surface);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: .75rem;
+          position: relative;
+          overflow: hidden;
+          transition: background .2s
+        }
+
+        .fi svg {
+          width: 16px;
+          height: 16px;
+          stroke: var(--ink);
+          fill: none;
+          stroke-width: 1.8;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+          transition: stroke .2s
+        }
+
+        .ft {
+          font-size: 13px;
+          font-weight: 600;
+          color: var(--ink);
+          margin-bottom: .25rem
+        }
+
+        .fd {
+          font-size: 11px;
+          color: var(--muted);
+          line-height: 1.6
+        }
+
+        /* Cell 1: CLAUDE.md lines */
+        .fc:nth-child(1):hover .fi {
+          background: var(--accent-bg)
+        }
+
+        .fc:nth-child(1):hover .fi svg {
+          stroke: var(--accent)
+        }
+
+        .tlines {
+          position: absolute;
+          right: 10px;
+          top: 50%;
+          transform: translateY(-50%);
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+          opacity: 0;
+          transition: opacity .2s
+        }
+
+        .fc:nth-child(1):hover .tlines {
+          opacity: 1
+        }
+
+        .tl {
+          height: 2px;
+          border-radius: 1px;
+          background: var(--accent);
+          opacity: .4
+        }
+
+        .tl1 {
+          width: 14px;
+          animation: tlA 1.6s ease-in-out infinite
+        }
+
+        .tl2 {
+          width: 10px;
+          animation: tlA 1.6s ease-in-out infinite .25s
+        }
+
+        .tl3 {
+          width: 12px;
+          animation: tlA 1.6s ease-in-out infinite .5s
+        }
+
+        @keyframes tlA {
+          0% {
+            transform: scaleX(0);
+            opacity: 0;
+            transform-origin: left
+          }
+
+          40%,
+          60% {
+            transform: scaleX(1);
+            opacity: .7;
+            transform-origin: left
+          }
+
+          100% {
+            transform: scaleX(0);
+            opacity: 0;
+            transform-origin: right
+          }
+        }
+
+        /* Cell 2: skill bars */
+        .fc:nth-child(2):hover .fi {
+          background: #E8F5E9
+        }
+
+        .sminis {
+          position: absolute;
+          right: 10px;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 28px;
+          display: flex;
+          flex-direction: column;
+          gap: 3px;
+          opacity: 0;
+          transition: opacity .2s
+        }
+
+        .fc:nth-child(2):hover .sminis {
+          opacity: 1
+        }
+
+        .sminb {
+          height: 2px;
+          border-radius: 1px;
+          background: var(--surface);
+          overflow: hidden
+        }
+
+        .sminf {
+          height: 100%;
+          border-radius: 1px;
+          background: var(--tg);
+          width: 0;
+          animation: sfill 2.2s ease-out infinite
+        }
+
+        .sminf2 {
+          animation-delay: .35s;
+          background: #90CAF9
+        }
+
+        .sminf3 {
+          animation-delay: .7s;
+          background: var(--ty)
+        }
+
+        @keyframes sfill {
+          0% {
+            width: 0
+          }
+
+          55%,
+          100% {
+            width: 100%
+          }
+        }
+
+        /* Cell 3: clock */
+        .fc:nth-child(3):hover .fi {
+          background: #FFF8E1
+        }
+
+        .fc:nth-child(3):hover .fi svg {
+          stroke: #F9A825
+        }
+
+        .fc:nth-child(3):hover .chand {
+          animation: cspin .5s linear infinite
+        }
+
+        .chand {
+          transform-origin: 50% 67%
+        }
+
+        @keyframes cspin {
+          from {
+            transform: rotate(0)
+          }
+
+          to {
+            transform: rotate(360deg)
+          }
+        }
+
+        /* Cell 4: token pops */
+        .fc:nth-child(4):hover .fi {
+          background: var(--accent-bg)
+        }
+
+        .fc:nth-child(4):hover .fi svg {
+          stroke: var(--accent)
+        }
+
+        .tpops {
+          position: absolute;
+          right: 8px;
+          top: 50%;
+          transform: translateY(-50%);
+          display: flex;
+          flex-direction: column;
+          gap: 3px;
+          opacity: 0;
+          transition: opacity .2s
+        }
+
+        .fc:nth-child(4):hover .tpops {
+          opacity: 1
+        }
+
+        .tp {
+          font-size: 7px;
+          font-family: var(--mono);
+          padding: 1px 4px;
+          border-radius: 3px;
+          color: var(--accent);
+          background: var(--accent-bg);
+          border: .5px solid var(--accent-border);
+          opacity: 0;
+          transform: translateX(4px);
+          animation: tpin .5s ease-out forwards
+        }
+
+        .tp2 {
+          animation-delay: .2s
+        }
+
+        .tp3 {
+          animation-delay: .4s
+        }
+
+        @keyframes tpin {
+          to {
+            opacity: 1;
+            transform: translateX(0)
+          }
+        }
+
+        /* Cell 5: download bounce */
+        .fc:nth-child(5):hover .fi {
+          background: #E8F5E9
+        }
+
+        .fc:nth-child(5):hover .fi svg {
+          stroke: var(--tg);
+          animation: dlb .9s ease-in-out infinite
+        }
+
+        @keyframes dlb {
+
+          0%,
+          100% {
+            transform: translateY(0)
+          }
+
+          50% {
+            transform: translateY(4px)
+          }
+        }
+
+        /* Cell 6: shield pulse */
+        .fc:nth-child(6):hover .fi svg {
+          animation: shp 1.5s ease-in-out infinite
+        }
+
+        @keyframes shp {
+
+          0%,
+          100% {
+            transform: scale(1)
+          }
+
+          50% {
+            transform: scale(1.14)
+          }
+        }
+      </style>
+      <div class="fg2">
+        <div class="fc">
+          <div class="fi"><svg viewBox="0 0 24 24">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+            </svg>
+            <div class="tlines">
+              <div class="tl tl1"></div>
+              <div class="tl tl2"></div>
+              <div class="tl tl3"></div>
+            </div>
+          </div>
+          <div class="ft">CLAUDE.md included</div>
+          <div class="fd">Every scan outputs a production-ready CLAUDE.md read by Claude Code automatically.</div>
+        </div>
+        <div class="fc">
+          <div class="fi"><svg viewBox="0 0 24 24">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+            </svg>
+            <div class="sminis">
+              <div class="sminb">
+                <div class="sminf"></div>
+              </div>
+              <div class="sminb">
+                <div class="sminf sminf2"></div>
+              </div>
+              <div class="sminb">
+                <div class="sminf sminf3"></div>
+              </div>
+            </div>
+          </div>
+          <div class="ft">59 curated skills</div>
+          <div class="fd">MARK scores your stack against 59 patterns and picks the top 6-8.</div>
+        </div>
+        <div class="fc">
+          <div class="fi"><svg viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" />
+              <polyline class="chand" points="12 6 12 12 16 14" />
+            </svg></div>
+          <div class="ft">30 second turnaround</div>
+          <div class="fd">GitHub API scan + Claude generation in one pass. No repo cloning.</div>
+        </div>
+        <div class="fc">
+          <div class="fi"><svg viewBox="0 0 24 24">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <path d="M3 9h18M9 21V9" />
+            </svg>
+            <div class="tpops">
+              <div class="tp">$DEPLOY</div>
+              <div class="tp tp2">$SPACES</div>
+              <div class="tp tp3">$BASE</div>
+            </div>
+          </div>
+          <div class="ft">pump.fun angles</div>
+          <div class="fd">Every idea has ticker, domain, value prop, and launch angle included.</div>
+        </div>
+        <div class="fc">
+          <div class="fi"><svg viewBox="0 0 24 24">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg></div>
+          <div class="ft">ZIP download</div>
+          <div class="fd">CLAUDE.md + skill files + setup guide in a ready-to-drop ZIP.</div>
+        </div>
+        <div class="fc">
+          <div class="fi"><svg viewBox="0 0 24 24">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg></div>
+          <div class="ft">Free, no account</div>
+          <div class="fd">5 scans per day, no login, no API key needed from the user.</div>
+        </div>
+      </div>
+      <p style="font-size:11px;color:var(--muted);margin-top:.625rem;font-family:var(--mono)">↑ hover tiap cell untuk
+        lihat animasi-nya</p>
+    </div>
+    <div class="anim-note">Behavior: pure CSS :hover, zero JS. Tiap cell punya animasi unik di icon-nya — CLAUDE.md:
+      lines grow, Skills: progress bars fill, Timer: clock hand spin, Ideas: token badges pop in, ZIP: download bounce,
+      Shield: scale pulse. Background icon change on hover juga.</div>
+  </div>
+
+  <!-- ANIM 05: TOKEN PARTICLES -->
+  <div class="anim-block">
+    <div class="anim-header">
+      <div>
+        <div class="anim-num">ANIM 05 · PRIORITY LOW</div>
+        <div class="anim-title">Token Section — Floating Node Graph Background</div>
+      </div>
+      <div class="anim-section">Token Section</div>
+    </div>
+    <div class="anim-body">
+      <style>
+        .tok-demo {
+          position: relative;
+          background: var(--ink);
+          border-radius: 12px;
+          overflow: hidden;
+          padding: 3rem 2rem;
+          text-align: center
+        }
+
+        #tcv {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%
+        }
+
+        .tok-ct {
+          position: relative;
+          z-index: 2
+        }
+
+        .tok-ey {
+          font-size: 10px;
+          letter-spacing: .15em;
+          text-transform: uppercase;
+          color: #555;
+          margin-bottom: .75rem
+        }
+
+        .tok-h2 {
+          font-size: clamp(22px, 3.5vw, 34px);
+          font-weight: 700;
+          letter-spacing: -.04em;
+          color: var(--paper);
+          margin-bottom: .75rem;
+          line-height: 1.05
+        }
+
+        .tok-sb {
+          font-size: 13px;
+          color: #555;
+          line-height: 1.65;
+          max-width: 360px;
+          margin: 0 auto 1.5rem
+        }
+
+        .tok-pls {
+          display: flex;
+          gap: 6px;
+          flex-wrap: wrap;
+          justify-content: center;
+          margin-bottom: 1.5rem
+        }
+
+        .tok-pl {
+          font-size: 10px;
+          font-family: var(--mono);
+          padding: 3px 10px;
+          border-radius: 99px;
+          border: .5px solid #2a2a28;
+          color: #555
+        }
+
+        .tok-pl.hi {
+          border-color: #333;
+          color: #888
+        }
+
+        .tok-btn {
+          font-size: 12px;
+          font-weight: 600;
+          padding: 10px 22px;
+          border-radius: 7px;
+          background: var(--paper);
+          color: var(--ink);
+          border: none;
+          cursor: pointer
+        }
+      </style>
+      <div class="tok-demo">
+        <canvas id="tcv"></canvas>
+        <div class="tok-ct">
+          <div class="tok-ey">$MARK ON PUMP.FUN</div>
+          <h2 class="tok-h2">The tool that finds<br>the next token.</h2>
+          <p class="tok-sb">A utility that helps builders find pump.fun ideas, backed by a pump.fun token. Meta angle.
+          </p>
+          <div class="tok-pls">
+            <span class="tok-pl hi">$MARK</span>
+            <span class="tok-pl">Solana</span>
+            <span class="tok-pl">pump.fun</span>
+            <span class="tok-pl">fair launch</span>
+            <span class="tok-pl">no team tokens</span>
+          </div>
+          <button class="tok-btn">Buy $MARK on pump.fun →</button>
+        </div>
+      </div>
+      <script>
+          ; (function () {
+            const cv = document.getElementById('tcv'), p = cv.parentElement
+            cv.width = p.offsetWidth; cv.height = p.offsetHeight
+            const ctx = cv.getContext('2d'), W = cv.width, H = cv.height
+            const nodes = Array.from({ length: 30 }, () => ({ x: Math.random() * W, y: Math.random() * H, vx: (Math.random() - .5) * .35, vy: (Math.random() - .5) * .35, r: Math.random() * 1.5 + .8 }))
+              ; (function draw() {
+                ctx.clearRect(0, 0, W, H)
+                nodes.forEach(n => {
+                  n.x += n.vx; n.y += n.vy
+                  if (n.x < 0 || n.x > W) n.vx *= -1
+                  if (n.y < 0 || n.y > H) n.vy *= -1
+                  ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2)
+                  ctx.fillStyle = 'rgba(90,90,90,0.5)'; ctx.fill()
+                })
+                for (let i = 0; i < nodes.length; i++)for (let j = i + 1; j < nodes.length; j++) {
+                  const dx = nodes[i].x - nodes[j].x, dy = nodes[i].y - nodes[j].y, d = Math.sqrt(dx * dx + dy * dy)
+                  if (d < 85) {
+                    ctx.beginPath(); ctx.moveTo(nodes[i].x, nodes[i].y); ctx.lineTo(nodes[j].x, nodes[j].y)
+                    ctx.strokeStyle = `rgba(70,70,70,${.28 * (1 - d / 85)})`; ctx.lineWidth = .5; ctx.stroke()
+                  }
+                }
+                requestAnimationFrame(draw)
+              })()
+          })()
+      </script>
+    </div>
+    <div class="anim-note">Behavior: 30 particle nodes bergerak lambat, terhubung dengan line saat jarak < 85px. Warna
+        abu gelap (rgba 70,70,70) subtle di atas background #0F0F0E. Zero library, vanilla Canvas 2D ~35 baris. Selalu
+        jalan saat section visible.</div>
+    </div>
+
+</body>
+
+</html>

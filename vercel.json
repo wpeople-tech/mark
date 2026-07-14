@@ -1,0 +1,6 @@
+{
+  "functions": {
+    "app/api/forge/route.ts": { "maxDuration": 60 },
+    "app/api/opportunities/route.ts": { "maxDuration": 30 }
+  }
+}

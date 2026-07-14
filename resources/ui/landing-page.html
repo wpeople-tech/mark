@@ -1,0 +1,1894 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MARK Intelligence — Read any repo. Find your next build.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+  <style>
+    /* ─── RESET ─────────────────────────────────────────────────────── */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    html {
+      scroll-behavior: smooth
+    }
+
+    /* ─── TOKENS ─────────────────────────────────────────────────────── */
+    :root {
+      --ink: #0F0F0E;
+      --paper: #F7F6F3;
+      --surface: #EFEFEB;
+      --border: #E5E3DC;
+      --muted: #888785;
+      --accent: #1A47A8;
+      --accent-bg: #EBF2FF;
+      --accent-border: #C3D7F7;
+      --green: #1B6B28;
+      --green-bg: #E9F5E9;
+      --green-border: #B6DEB9;
+      --term-bg: #0B0B0A;
+      --term-green: #6DBE8A;
+      --term-blue: #7DAEEA;
+      --term-yellow: #E8C56A;
+      --term-dim: #444442;
+      --term-text: #E8E6E0;
+      --font-sans: 'Geist', system-ui, sans-serif;
+      --font-mono: 'Geist Mono', monospace;
+      --radius: 8px;
+      --radius-card: 14px;
+      --text-hero: clamp(40px, 6vw, 64px);
+      --text-h2: clamp(26px, 3.5vw, 32px);
+      --text-token: clamp(36px, 6vw, 60px);
+    }
+
+    /* ─── HERO STAGGER REVEAL ─────────────────────────────────────────── */
+    .stagger {
+      opacity: 0;
+      transform: translateY(20px);
+      animation: staggerIn .8s cubic-bezier(.16, 1, .3, 1) forwards
+    }
+
+    .stagger-1 {
+      animation-delay: .1s
+    }
+
+    .stagger-2 {
+      animation-delay: .22s
+    }
+
+    .stagger-3 {
+      animation-delay: .34s
+    }
+
+    .stagger-4 {
+      animation-delay: .46s
+    }
+
+    .stagger-5 {
+      animation-delay: .58s
+    }
+
+    @keyframes staggerIn {
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    @media(prefers-reduced-motion:reduce) {
+      .stagger {
+        animation: none;
+        opacity: 1;
+        transform: none
+      }
+    }
+
+    /* ─── BASE ────────────────────────────────────────────────────────── */
+    body {
+      font-family: var(--font-sans);
+      background: var(--paper);
+      color: var(--ink);
+      line-height: 1.6;
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    a {
+      text-decoration: none;
+      color: inherit
+    }
+
+    button {
+      cursor: pointer;
+      font-family: var(--font-sans)
+    }
+
+    /* ─── CUSTOM CURSOR ───────────────────────────────────────────────── */
+    @media(hover:hover) and (pointer:fine) {
+      .cursor-dot {
+        position: fixed;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+        z-index: 9999;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--ink);
+        transform: translate(-50%, -50%);
+        transition: width .18s ease, height .18s ease, background .18s ease;
+      }
+
+      .cursor-ring {
+        position: fixed;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+        z-index: 9998;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        border: .5px solid rgba(15, 15, 14, .35);
+        transform: translate(-50%, -50%);
+        transition: width .25s cubic-bezier(.16, 1, .3, 1), height .25s cubic-bezier(.16, 1, .3, 1),
+          border-color .25s ease, background .25s ease;
+      }
+
+      .cursor-ring.hover {
+        width: 56px;
+        height: 56px;
+        background: rgba(26, 71, 168, .06);
+        border-color: rgba(26, 71, 168, .4);
+      }
+
+      .cursor-dot.hover {
+        background: var(--accent)
+      }
+    }
+
+    @media(hover:none), (pointer:coarse) {
+
+      .cursor-dot,
+      .cursor-ring {
+        display: none
+      }
+
+      body {
+        cursor: auto
+      }
+    }
+
+    /* ─── AMBIENT SHAPE BLUR ──────────────────────────────────────────── */
+    .blur-shape {
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 0;
+      width: 480px;
+      height: 480px;
+      background: radial-gradient(circle, rgba(26, 71, 168, .09), transparent 70%);
+      filter: blur(70px);
+      border-radius: 50%;
+      opacity: 0;
+      transition: opacity .6s ease;
+      will-change: transform;
+    }
+
+    .blur-shape.active {
+      opacity: 1
+    }
+
+    @media(max-width:768px) {
+      .blur-shape {
+        display: none
+      }
+    }
+
+    /* ─── NAV ─────────────────────────────────────────────────────────── */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2.5rem;
+      height: 58px;
+      background: rgba(247, 246, 243, 0.88);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: .5px solid rgba(229, 227, 220, 0.7);
+      transition: background .3s, transform .4s cubic-bezier(.16, 1, .3, 1);
+    }
+
+    nav.nav-hidden {
+      transform: translateY(-100%)
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px
+    }
+
+    .nav-mark {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      background: var(--ink);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--paper);
+      letter-spacing: -.01em;
+    }
+
+    .nav-name {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: -.02em;
+      color: var(--ink)
+    }
+
+    .nav-name span {
+      font-weight: 400;
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      margin-left: 5px
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 2rem
+    }
+
+    .nav-link {
+      font-size: 13px;
+      color: var(--muted);
+      transition: color .15s;
+      position: relative;
+      padding: 4px 0;
+    }
+
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 0;
+      height: 1px;
+      background: var(--ink);
+      transition: width .28s cubic-bezier(.16, 1, .3, 1);
+    }
+
+    .nav-link:hover {
+      color: var(--ink)
+    }
+
+    .nav-link:hover::after {
+      width: 100%
+    }
+
+    .nav-link.active {
+      color: var(--ink)
+    }
+
+    .nav-link.active::after {
+      width: 100%;
+      background: var(--accent)
+    }
+
+    .nav-cta {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 8px 18px;
+      border-radius: 7px;
+      background: var(--ink);
+      color: var(--paper);
+      border: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      letter-spacing: .01em;
+      transition: opacity .15s;
+    }
+
+    .nav-cta:hover {
+      opacity: .85
+    }
+
+    /* ─── HERO ────────────────────────────────────────────────────────── */
+    .hero {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      padding-top: 58px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-left {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 5rem 2.5rem 5rem 3.5rem;
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero-eye {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 1.25rem;
+    }
+
+    .eye-pulse {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: eyepulse 2.4s ease-in-out infinite;
+    }
+
+    @keyframes eyepulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1)
+      }
+
+      50% {
+        opacity: .35;
+        transform: scale(.7)
+      }
+    }
+
+    .hero-h1 {
+      font-size: var(--text-hero);
+      font-weight: 700;
+      letter-spacing: -.04em;
+      line-height: 1.02;
+      color: var(--ink);
+      margin-bottom: 1.25rem;
+    }
+
+    .hero-h1 em {
+      font-style: normal;
+      color: var(--muted)
+    }
+
+    .hero-sub {
+      font-size: 16px;
+      color: var(--muted);
+      line-height: 1.7;
+      max-width: 400px;
+      margin-bottom: 2rem;
+    }
+
+    .hero-ctas {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap
+    }
+
+    .btn-primary {
+      font-size: 13px;
+      font-weight: 600;
+      padding: 12px 22px;
+      border-radius: 8px;
+      background: var(--ink);
+      color: var(--paper);
+      border: none;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      letter-spacing: .01em;
+      transition: opacity .15s, transform .12s ease-out;
+      will-change: transform;
+    }
+
+    .btn-primary:hover {
+      opacity: .88
+    }
+
+    .btn-secondary {
+      font-size: 13px;
+      color: var(--muted);
+      border: .5px solid var(--border);
+      background: transparent;
+      padding: 12px 16px;
+      border-radius: 8px;
+      transition: border-color .15s, color .15s, transform .12s ease-out;
+      will-change: transform;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--ink);
+      color: var(--ink)
+    }
+
+    .magnetic-wrap {
+      display: inline-flex
+    }
+
+    .hero-trust {
+      margin-top: 2.5rem;
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .trust-dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--muted)
+    }
+
+    /* Hero right — glass zone */
+    .hero-right {
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #heroCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%
+    }
+
+    .hero-glass-content {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .scan-label {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--muted);
+      letter-spacing: .05em;
+      margin-bottom: 4px;
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      justify-content: center;
+      max-width: 320px
+    }
+
+    .glass-chip {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      padding: 4px 12px;
+      border-radius: 99px;
+      background: rgba(247, 246, 243, .82);
+      border: .5px solid rgba(229, 227, 220, .9);
+      color: var(--ink);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      opacity: 0;
+      transform: translateY(10px) scale(.94);
+      transition: opacity .5s ease, transform .5s ease;
+    }
+
+    .glass-chip.show {
+      opacity: 1;
+      transform: translateY(0) scale(1)
+    }
+
+    .glass-chip.accent {
+      background: rgba(235, 242, 255, .88);
+      border-color: rgba(195, 215, 247, .9);
+      color: var(--accent);
+    }
+
+    /* ─── STATS ───────────────────────────────────────────────────────── */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-top: .5px solid var(--border);
+      border-bottom: .5px solid var(--border);
+    }
+
+    .stat {
+      padding: 1.25rem 1.5rem;
+      border-right: .5px solid var(--border);
+      text-align: center;
+    }
+
+    .stat:last-child {
+      border-right: none
+    }
+
+    .stat-n {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -.04em;
+      color: var(--ink);
+      display: block;
+    }
+
+    .stat-l {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+      display: block
+    }
+
+    /* ─── TICKER ──────────────────────────────────────────────────────── */
+    .ticker-wrap {
+      overflow: hidden;
+      padding: 10px 0;
+      background: var(--ink);
+      border-bottom: .5px solid rgba(255, 255, 255, .06);
+    }
+
+    .ticker-inner {
+      display: flex;
+      gap: 2.5rem;
+      white-space: nowrap;
+      animation: ticker 28s linear infinite;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: #555;
+    }
+
+    .ticker-inner .hi {
+      color: var(--term-green)
+    }
+
+    .ticker-inner .sep {
+      color: #2a2a28
+    }
+
+    @keyframes ticker {
+      0% {
+        transform: translateX(0)
+      }
+
+      100% {
+        transform: translateX(-50%)
+      }
+    }
+
+    /* ─── SECTION SHARED ──────────────────────────────────────────────── */
+    section {
+      padding: 5rem 3.5rem
+    }
+
+    .section-label {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: .5rem;
+    }
+
+    .section-h2 {
+      font-size: var(--text-h2);
+      font-weight: 700;
+      letter-spacing: -.03em;
+      color: var(--ink);
+      margin-bottom: .75rem;
+      line-height: 1.1;
+    }
+
+    .section-sub {
+      font-size: 15px;
+      color: var(--muted);
+      line-height: 1.65;
+      max-width: 520px
+    }
+
+    /* ─── DEMO SECTION ───────────────────────────────────────────────── */
+    .demo-section {
+      background: var(--paper);
+      padding: 5rem 3.5rem
+    }
+
+    .demo-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 3rem;
+    }
+
+    .demo-card {
+      background: #fff;
+      border: .5px solid var(--border);
+      border-radius: var(--radius-card);
+      overflow: hidden;
+    }
+
+    .demo-card-wide {
+      grid-column: 1/-1
+    }
+
+    .dc-head {
+      padding: .875rem 1.25rem;
+      border-bottom: .5px solid #F3F2EE;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .dc-label {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--muted)
+    }
+
+    .dc-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink);
+      margin-top: 3px
+    }
+
+    .dc-badge {
+      font-size: 10px;
+      padding: 3px 9px;
+      border-radius: 99px;
+      background: var(--green-bg);
+      color: var(--green);
+      border: .5px solid var(--green-border);
+    }
+
+    .dc-body {
+      padding: 1rem 1.25rem
+    }
+
+    /* Terminal */
+    .terminal {
+      background: var(--term-bg);
+      border-radius: 10px;
+      padding: .875rem 1rem;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      line-height: 1.9;
+      min-height: 110px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tl {
+      display: flex;
+      gap: 5px;
+      opacity: 0;
+      transform: translateX(-6px);
+      transition: all .35s ease
+    }
+
+    .tl.show {
+      opacity: 1;
+      transform: translateX(0)
+    }
+
+    .td {
+      color: var(--term-dim)
+    }
+
+    .tw {
+      color: var(--term-text)
+    }
+
+    .tb {
+      color: var(--term-blue)
+    }
+
+    .tg {
+      color: var(--term-green)
+    }
+
+    .ty {
+      color: var(--term-yellow)
+    }
+
+    .tcursor {
+      display: inline-block;
+      width: 7px;
+      height: 13px;
+      background: var(--term-text);
+      animation: blinkcur .9s step-end infinite;
+      vertical-align: -2px;
+      margin-left: 2px
+    }
+
+    @keyframes blinkcur {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: 0
+      }
+    }
+
+    /* Tag row */
+    .tag-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: .875rem
+    }
+
+    .tag {
+      font-size: 10px;
+      font-family: var(--font-mono);
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: var(--surface);
+      color: #555552;
+      border: .5px solid var(--border);
+    }
+
+    /* Skill progress */
+    .skill-bars {
+      margin-top: .875rem;
+      display: flex;
+      flex-direction: column;
+      gap: 8px
+    }
+
+    .skill-row {
+      display: flex;
+      align-items: center;
+      gap: 10px
+    }
+
+    .skill-name {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--muted);
+      min-width: 120px
+    }
+
+    .skill-bar {
+      flex: 1;
+      height: 3px;
+      background: var(--surface);
+      border-radius: 99px;
+      overflow: hidden
+    }
+
+    .skill-fill {
+      height: 100%;
+      border-radius: 99px;
+      background: var(--ink);
+      width: 0;
+      transition: width 1.4s cubic-bezier(.4, 0, .2, 1)
+    }
+
+    .skill-pct {
+      font-size: 10px;
+      font-family: var(--font-mono);
+      color: var(--muted);
+      min-width: 28px;
+      text-align: right
+    }
+
+    /* Ideas cards */
+    .ideas-col {
+      display: flex;
+      flex-direction: column;
+      gap: 8px
+    }
+
+    .idea-card {
+      border: .5px solid var(--border);
+      border-radius: 9px;
+      padding: .75rem .875rem;
+      background: var(--paper);
+      transition: border-color .2s;
+      cursor: pointer;
+    }
+
+    .idea-card:hover {
+      border-color: var(--accent)
+    }
+
+    .idea-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px
+    }
+
+    .idea-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink)
+    }
+
+    .idea-tk {
+      font-size: 10px;
+      font-family: var(--font-mono);
+      color: var(--accent);
+      background: var(--accent-bg);
+      border: .5px solid var(--accent-border);
+      padding: 2px 7px;
+      border-radius: 4px;
+    }
+
+    .idea-desc {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.55
+    }
+
+    .idea-pf {
+      font-size: 10px;
+      color: var(--green);
+      background: var(--green-bg);
+      border: .5px solid var(--green-border);
+      padding: 2px 8px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-top: 5px;
+    }
+
+    .idea-card.dim {
+      opacity: .45
+    }
+
+    /* ─── HOW IT WORKS ────────────────────────────────────────────────── */
+    .how-section {
+      background: var(--surface);
+      border-top: .5px solid var(--border);
+      border-bottom: .5px solid var(--border)
+    }
+
+    .how-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0;
+      margin-top: 3rem
+    }
+
+    .how-step {
+      padding: 2rem 2rem 2rem 0;
+      border-right: .5px solid var(--border);
+      padding-right: 2rem;
+    }
+
+    .how-step:last-child {
+      border-right: none;
+      padding-right: 0
+    }
+
+    .how-num {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--muted);
+      margin-bottom: .75rem;
+      display: block;
+    }
+
+    .how-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: var(--ink);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: .875rem;
+    }
+
+    .how-icon svg {
+      width: 20px;
+      height: 20px;
+      stroke: #fff;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round
+    }
+
+    .how-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: .35rem
+    }
+
+    .how-desc {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.6
+    }
+
+    /* ─── FEATURES GRID ───────────────────────────────────────────────── */
+    .features-section {
+      background: var(--paper)
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      border: .5px solid var(--border);
+      border-radius: var(--radius-card);
+      overflow: hidden;
+      margin-top: 3rem;
+      background: var(--border);
+    }
+
+    .feature-cell {
+      background: var(--paper);
+      padding: 1.75rem 1.5rem;
+      transition: background .2s;
+    }
+
+    .feature-cell:hover {
+      background: #fff
+    }
+
+    .feature-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: .875rem;
+    }
+
+    .feature-icon svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--ink);
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round
+    }
+
+    .feature-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: .35rem
+    }
+
+    .feature-desc {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.6
+    }
+
+    /* ─── TOKEN SECTION ───────────────────────────────────────────────── */
+    .token-section {
+      background: var(--ink);
+      color: var(--paper);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 6rem 3.5rem;
+    }
+
+    .token-eye {
+      font-size: 10px;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: #555;
+      margin-bottom: 1rem
+    }
+
+    .token-h2 {
+      font-size: clamp(36px, 5vw, 60px);
+      font-weight: 700;
+      letter-spacing: -.04em;
+      color: var(--paper);
+      margin-bottom: 1rem;
+      line-height: 1.05;
+    }
+
+    .token-sub {
+      font-size: 15px;
+      color: #666;
+      line-height: 1.65;
+      max-width: 460px;
+      margin-bottom: 2.5rem
+    }
+
+    .token-pills {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 2.5rem
+    }
+
+    .token-pill {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      padding: 5px 14px;
+      border-radius: 99px;
+      border: .5px solid #2a2a28;
+      color: #555;
+    }
+
+    .token-pill.hi {
+      border-color: #333;
+      color: #888
+    }
+
+    .token-cta {
+      font-size: 13px;
+      font-weight: 600;
+      padding: 13px 28px;
+      border-radius: 8px;
+      background: var(--paper);
+      color: var(--ink);
+      border: none;
+      transition: opacity .15s, transform .15s;
+    }
+
+    .token-cta:hover {
+      opacity: .88;
+      transform: translateY(-1px)
+    }
+
+    /* ─── FOOTER ──────────────────────────────────────────────────────── */
+    footer {
+      padding: 1.5rem 3.5rem;
+      border-top: .5px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .footer-left {
+      font-size: 12px;
+      color: var(--muted);
+      font-family: var(--font-mono)
+    }
+
+    .footer-right {
+      display: flex;
+      gap: 1.5rem;
+      font-size: 12px;
+      color: var(--muted)
+    }
+
+    .footer-right a:hover {
+      color: var(--ink)
+    }
+
+    /* ─── SCROLL ANIMATIONS ───────────────────────────────────────────── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity .7s ease, transform .7s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0)
+    }
+
+    .reveal-delay-1 {
+      transition-delay: .1s
+    }
+
+    .reveal-delay-2 {
+      transition-delay: .2s
+    }
+
+    .reveal-delay-3 {
+      transition-delay: .3s
+    }
+
+    /* ─── SCROLLBAR ───────────────────────────────────────────────────── */
+    ::-webkit-scrollbar {
+      width: 6px
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 3px
+    }
+
+    /* ─── TOAST ───────────────────────────────────────────────────────── */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      z-index: 9997;
+      transform: translate(-50%, 80px);
+      opacity: 0;
+      background: var(--ink);
+      color: var(--paper);
+      font-size: 13px;
+      padding: 12px 20px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, .18);
+      transition: transform .5s cubic-bezier(.16, 1, .3, 1), opacity .4s ease;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      transform: translate(-50%, 0);
+      opacity: 1
+    }
+
+    .toast-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--term-green)
+    }
+
+    /* ─── MOBILE ──────────────────────────────────────────────────────── */
+    @media(max-width:768px) {
+      nav {
+        padding: 0 1.25rem
+      }
+
+      .nav-links {
+        display: none
+      }
+
+      .hero {
+        grid-template-columns: 1fr;
+        min-height: auto
+      }
+
+      .hero-left {
+        padding: 6rem 1.5rem 3rem
+      }
+
+      .hero-right {
+        height: 320px
+      }
+
+      .stats {
+        grid-template-columns: repeat(2, 1fr)
+      }
+
+      section,
+      .demo-section,
+      .how-section,
+      .features-section,
+      .token-section,
+      .features-section {
+        padding: 3rem 1.5rem
+      }
+
+      .demo-grid {
+        grid-template-columns: 1fr
+      }
+
+      .demo-card-wide {
+        grid-column: 1
+      }
+
+      .how-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem
+      }
+
+      .how-step {
+        border-right: none;
+        padding-right: 0;
+        border-bottom: .5px solid var(--border);
+        padding-bottom: 2rem
+      }
+
+      .how-step:last-child {
+        border-bottom: none;
+        padding-bottom: 0
+      }
+
+      .features-grid {
+        grid-template-columns: 1fr
+      }
+
+      footer {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- CUSTOM CURSOR -->
+  <div class="cursor-dot" id="cursorDot"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+
+  <!-- AMBIENT SHAPE BLUR -->
+  <div class="blur-shape" id="blurShape"></div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast">
+    <div class="toast-dot"></div>
+    <span>Coming to Chrome Web Store soon</span>
+  </div>
+
+  <!-- NAV -->
+  <nav id="nav">
+    <div class="nav-logo">
+      <div class="nav-mark">M</div>
+      <span class="nav-name">MARK <span>Intelligence</span></span>
+    </div>
+    <div class="nav-links">
+      <a class="nav-link" href="#demo">How it works</a>
+      <a class="nav-link" href="#features">Features</a>
+      <a class="nav-link" href="#token">$MARK</a>
+    </div>
+    <span class="magnetic-wrap">
+      <button class="nav-cta magnetic" onclick="window.open('#','_blank')">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+          stroke-linejoin="round" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 8v4l3 3" />
+        </svg>
+        Add to Chrome — free
+      </button>
+    </span>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero" id="hero">
+    <div class="hero-left">
+      <div class="hero-eye stagger stagger-1">
+        <div class="eye-pulse"></div>
+        Chrome Extension · Free · No login
+      </div>
+      <h1 class="hero-h1 stagger stagger-2">Read any repo.<br><em>Find your</em><br>next build.</h1>
+      <p class="hero-sub stagger stagger-3">Open any GitHub repo. MARK scans it in seconds and returns a full
+        intelligence report — plus 3 utility website ideas ready to launch on pump.fun.</p>
+      <div class="hero-ctas stagger stagger-4">
+        <span class="magnetic-wrap">
+          <button class="btn-primary magnetic">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+              stroke-linejoin="round" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" />
+              <path d="m10 8 6 4-6 4V8z" />
+            </svg>
+            Add to Chrome
+          </button>
+        </span>
+        <span class="magnetic-wrap">
+          <button class="btn-secondary magnetic"
+            onclick="document.getElementById('demo').scrollIntoView({behavior:'smooth'})">See demo ↓</button>
+        </span>
+      </div>
+      <div class="hero-trust stagger stagger-5">
+        <span>Free forever</span>
+        <div class="trust-dot"></div>
+        <span>No account needed</span>
+        <div class="trust-dot"></div>
+        <span>5 scans / day</span>
+      </div>
+    </div>
+    <div class="hero-right">
+      <canvas id="heroCanvas"></canvas>
+      <div class="hero-glass-content">
+        <div class="scan-label" id="heroScanLabel">scanning vercel/next.js...</div>
+        <div class="chip-row" id="heroChips">
+          <div class="glass-chip" id="hc0">Next.js 14</div>
+          <div class="glass-chip" id="hc1">TypeScript strict</div>
+          <div class="glass-chip" id="hc2">React 18</div>
+          <div class="glass-chip" id="hc3">Turbopack</div>
+          <div class="glass-chip accent" id="hc4">→ 8 skills matched</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="stat reveal">
+      <span class="stat-n">30s</span>
+      <span class="stat-l">average scan time</span>
+    </div>
+    <div class="stat reveal reveal-delay-1">
+      <span class="stat-n">59</span>
+      <span class="stat-l">curated skill patterns</span>
+    </div>
+    <div class="stat reveal reveal-delay-2">
+      <span class="stat-n">3</span>
+      <span class="stat-l">build ideas per repo</span>
+    </div>
+    <div class="stat reveal reveal-delay-3">
+      <span class="stat-n">0</span>
+      <span class="stat-l">logins required</span>
+    </div>
+  </div>
+
+  <!-- TICKER -->
+  <div class="ticker-wrap">
+    <div class="ticker-inner" id="ticker">
+      <span>→ vercel/next.js</span><span class="hi">scanned ✓</span><span class="sep">·</span>
+      <span>$DEPLOY generated</span><span class="sep">·</span>
+      <span>→ ggerganov/whisper.cpp</span><span class="hi">scanned ✓</span><span class="sep">·</span>
+      <span>$SPACES generated</span><span class="sep">·</span>
+      <span>→ supabase/supabase</span><span class="hi">scanned ✓</span><span class="sep">·</span>
+      <span>$BASE generated</span><span class="sep">·</span>
+      <span>→ microsoft/vscode</span><span class="hi">scanned ✓</span><span class="sep">·</span>
+      <span>$EXT generated</span><span class="sep">·</span>
+      <span>→ langchain-ai/langchain</span><span class="hi">scanned ✓</span><span class="sep">·</span>
+      <span>$CHAIN generated</span><span class="sep">·</span>
+      <span>→ vercel/next.js</span><span class="hi">scanned ✓</span><span class="sep">·</span>
+      <span>$DEPLOY generated</span><span class="sep">·</span>
+      <span>→ ggerganov/whisper.cpp</span><span class="hi">scanned ✓</span><span class="sep">·</span>
+      <span>$SPACES generated</span><span class="sep">·</span>
+      <span>→ supabase/supabase</span><span class="hi">scanned ✓</span><span class="sep">·</span>
+      <span>$BASE generated</span><span class="sep">·</span>
+      <span>→ microsoft/vscode</span><span class="hi">scanned ✓</span><span class="sep">·</span>
+      <span>$EXT generated</span><span class="sep">·</span>
+      <span>→ langchain-ai/langchain</span><span class="hi">scanned ✓</span><span class="sep">·</span>
+      <span>$CHAIN generated</span><span class="sep">·</span>
+    </div>
+  </div>
+
+  <!-- DEMO SECTION -->
+  <div class="demo-section" id="demo">
+    <div class="reveal">
+      <div class="section-label">Live demo</div>
+      <h2 class="section-h2">Two layers of intelligence</h2>
+      <p class="section-sub">Every scan returns a MARK File — a deep codebase read — plus three pump.fun-ready utility
+        ideas derived from what the repo can actually do.</p>
+    </div>
+
+    <div class="demo-grid">
+      <!-- MARK File card -->
+      <div class="demo-card reveal">
+        <div class="dc-head">
+          <div>
+            <div class="dc-label">Layer 01 — Mark File</div>
+            <div class="dc-title">Full repo intelligence scan</div>
+          </div>
+          <div class="dc-badge" id="demoStatus">scanning...</div>
+        </div>
+        <div class="dc-body">
+          <div class="terminal" id="demoTerminal">
+            <div class="tl" id="tl0"><span class="td">▸</span><span class="tw">scanning vercel/next.js...</span></div>
+          </div>
+          <div class="tag-row" id="demoTags"></div>
+          <div class="skill-bars" id="demoSkillBars" style="margin-top:1rem"></div>
+        </div>
+      </div>
+
+      <!-- Ideas card -->
+      <div class="demo-card reveal reveal-delay-1">
+        <div class="dc-head">
+          <div>
+            <div class="dc-label">Layer 02 — Build Opportunities</div>
+            <div class="dc-title">3 ideas from this repo</div>
+          </div>
+        </div>
+        <div class="dc-body">
+          <div style="font-size:11px;color:var(--muted);font-family:var(--font-mono);margin-bottom:.875rem">
+            From <span style="color:var(--ink)">vercel/next.js</span> capabilities
+          </div>
+          <div class="ideas-col">
+            <div class="idea-card">
+              <div class="idea-top">
+                <span class="idea-name">DeployTrack.xyz</span>
+                <span class="idea-tk">$DEPLOY</span>
+              </div>
+              <div class="idea-desc">Public Vercel deployment monitor — live dashboard for builders tracking deploys
+                across projects</div>
+              <span class="idea-pf">pump.fun viable ✓</span>
+            </div>
+            <div class="idea-card">
+              <div class="idea-top">
+                <span class="idea-name">FrameScore.xyz</span>
+                <span class="idea-tk">$FRAME</span>
+              </div>
+              <div class="idea-desc">Score any Next.js repo for production readiness in 60 seconds — automated audit
+                tool</div>
+              <span class="idea-pf">pump.fun viable ✓</span>
+            </div>
+            <div class="idea-card dim">
+              <div class="idea-top">
+                <span class="idea-name">EdgeWatch.xyz</span>
+                <span class="idea-tk">$EDGE</span>
+              </div>
+              <div class="idea-desc">Real-time edge function monitor for Vercel / Cloudflare deployments</div>
+              <span class="idea-pf">pump.fun viable ✓</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <div class="how-section">
+    <section style="padding:5rem 3.5rem">
+      <div class="reveal">
+        <div class="section-label">Process</div>
+        <h2 class="section-h2">Three steps, thirty seconds</h2>
+      </div>
+      <div class="how-grid">
+        <div class="how-step reveal reveal-delay-1">
+          <span class="how-num">01</span>
+          <div class="how-icon">
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
+            </svg>
+          </div>
+          <div class="how-title">Open any repo</div>
+          <div class="how-desc">Navigate to any public GitHub repository. MARK works on any language, any stack, any
+            size.</div>
+        </div>
+        <div class="how-step reveal reveal-delay-2">
+          <span class="how-num">02</span>
+          <div class="how-icon">
+            <svg viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.35-4.35" />
+              <path d="M11 8v6M8 11h6" />
+            </svg>
+          </div>
+          <div class="how-title">Click MARK</div>
+          <div class="how-desc">The extension reads manifest files, detects stack, and scores 59 skill patterns against
+            what it finds.</div>
+        </div>
+        <div class="how-step reveal reveal-delay-3">
+          <span class="how-num">03</span>
+          <div class="how-icon">
+            <svg viewBox="0 0 24 24">
+              <path d="M22 2 11 13M22 2 15 22l-4-9-9-4 20-7z" />
+            </svg>
+          </div>
+          <div class="how-title">Get ideas + launch</div>
+          <div class="how-desc">Download your MARK File ZIP. Ship the utility website. Launch the token. Repeat.</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- FEATURES -->
+  <div class="features-section" id="features">
+    <section style="padding:5rem 3.5rem">
+      <div class="reveal">
+        <div class="section-label">What's inside</div>
+        <h2 class="section-h2">Built for crypto builders</h2>
+        <p class="section-sub">Everything in the output is designed for one thing: getting a utility website live and a
+          token launched as fast as possible.</p>
+      </div>
+      <div class="features-grid reveal" style="margin-top:3rem">
+        <div class="feature-cell">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+              <polyline points="10 9 9 9 8 9" />
+            </svg>
+          </div>
+          <div class="feature-title">CLAUDE.md included</div>
+          <div class="feature-desc">Every scan outputs a production-ready CLAUDE.md — the file Claude Code reads
+            automatically every session.</div>
+        </div>
+        <div class="feature-cell">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+            </svg>
+          </div>
+          <div class="feature-title">59 curated skills</div>
+          <div class="feature-desc">MARK scores your stack against 59 patterns — Next.js, TypeScript, Prisma, auth,
+            testing, and more — and picks the top 6-8.</div>
+        </div>
+        <div class="feature-cell">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 8v4l3 3" />
+            </svg>
+          </div>
+          <div class="feature-title">30 second turnaround</div>
+          <div class="feature-desc">GitHub API manifest scan + Claude generation in one pass. No repo cloning. No file
+            uploads.</div>
+        </div>
+        <div class="feature-cell">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <path d="M3 9h18M9 21V9" />
+            </svg>
+          </div>
+          <div class="feature-title">pump.fun angles</div>
+          <div class="feature-desc">Every idea comes with a ticker, domain suggestion, value prop, and why it's viable
+            as a token launch.</div>
+        </div>
+        <div class="feature-cell">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24">
+              <path d="m22 8-6 4 6 4V8zM2 8l6 4-6 4V8z" />
+              <rect x="8" y="6" width="8" height="12" rx="1" />
+            </svg>
+          </div>
+          <div class="feature-title">ZIP download</div>
+          <div class="feature-desc">One click downloads CLAUDE.md + selected skill files + setup guide in a
+            ready-to-drop ZIP.</div>
+        </div>
+        <div class="feature-cell">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+          </div>
+          <div class="feature-title">Free, no account</div>
+          <div class="feature-desc">5 scans per day, no login, no API key needed. MARK handles everything on the server
+            side.</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- TOKEN -->
+  <div class="token-section" id="token">
+    <div class="token-eye reveal">$MARK ON PUMP.FUN</div>
+    <h2 class="token-h2 reveal reveal-delay-1">The tool that finds<br>the next token.</h2>
+    <p class="token-sub reveal reveal-delay-2">MARK ships as a Chrome Extension. The token launch is meta: a utility
+      that helps builders find pump.fun ideas, backed by a pump.fun token.</p>
+    <div class="token-pills reveal reveal-delay-2">
+      <span class="token-pill hi">$MARK</span>
+      <span class="token-pill">Solana</span>
+      <span class="token-pill">pump.fun</span>
+      <span class="token-pill">fair launch</span>
+      <span class="token-pill">no team tokens</span>
+    </div>
+    <span class="magnetic-wrap">
+      <button class="token-cta magnetic reveal reveal-delay-3" onclick="window.open('https://pump.fun','_blank')">Buy
+        $MARK on pump.fun →</button>
+    </span>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-left">markintel.xyz · free · $MARK</div>
+    <div class="footer-right">
+      <a href="#">X / Twitter</a>
+      <a href="#">GitHub</a>
+      <a href="#">Chrome Store</a>
+      <a href="#">pump.fun</a>
+    </div>
+  </footer>
+
+  <script>
+    /* ── HERO LIQUID GLASS ──────────────────────────────────────────── */
+    const heroCanvas = document.getElementById('heroCanvas')
+    const hctx = heroCanvas.getContext('2d')
+
+    function resizeHeroCanvas() {
+      const r = heroCanvas.parentElement.getBoundingClientRect()
+      heroCanvas.width = r.width
+      heroCanvas.height = r.height
+    }
+    resizeHeroCanvas()
+    window.addEventListener('resize', resizeHeroCanvas)
+
+    const blobs = [
+      { bx: .48, by: .46, r: .30, px: 1.9, py: 1.5, phase: 0 },
+      { bx: .62, by: .36, r: .20, px: 1.6, py: 2.0, phase: 1.4 },
+      { bx: .32, by: .62, r: .18, px: 2.2, py: 1.2, phase: 2.7 },
+    ]
+    let heroT = 0
+    let heroMouse = { x: heroCanvas.width * .5, y: heroCanvas.height * .46 }
+
+    heroCanvas.parentElement.addEventListener('mousemove', e => {
+      const r = heroCanvas.getBoundingClientRect()
+      heroMouse = { x: e.clientX - r.left, y: e.clientY - r.top }
+    })
+    heroCanvas.parentElement.addEventListener('mouseleave', () => {
+      heroMouse = { x: heroCanvas.width * .5, y: heroCanvas.height * .46 }
+    })
+
+    function drawHeroBlobs() {
+      const W = heroCanvas.width, H = heroCanvas.height
+      hctx.clearRect(0, 0, W, H)
+
+      for (const b of blobs) {
+        const t = heroT * .008
+        const bx = (b.bx + Math.sin(t * b.px + b.phase) * .15) * W
+        const by = (b.by + Math.cos(t * b.py + b.phase) * .12) * H
+        const br = b.r * Math.min(W, H)
+
+        // Mouse attraction
+        const mdx = heroMouse.x - bx, mdy = heroMouse.y - by
+        const md = Math.sqrt(mdx * mdx + mdy * mdy)
+        const pull = Math.max(0, 1 - md / (H * .65)) * .09
+        const fx = bx + mdx * pull, fy = by + mdy * pull
+
+        // Main blob fill
+        const g = hctx.createRadialGradient(fx - br * .22, fy - br * .22, br * .04, fx, fy, br * 1.18)
+        g.addColorStop(0, 'rgba(255,255,254,0.58)')
+        g.addColorStop(.3, 'rgba(244,242,236,0.32)')
+        g.addColorStop(.65, 'rgba(228,226,218,0.16)')
+        g.addColorStop(1, 'rgba(200,198,192,0)')
+        hctx.fillStyle = g
+        hctx.beginPath()
+        hctx.arc(fx, fy, br * 1.08, 0, Math.PI * 2)
+        hctx.fill()
+
+        // Shimmer highlight
+        const sh = hctx.createLinearGradient(fx - br * .55, fy - br * .55, fx + br * .25, fy + br * .25)
+        sh.addColorStop(0, 'rgba(255,255,255,0.48)')
+        sh.addColorStop(.35, 'rgba(255,255,255,0.16)')
+        sh.addColorStop(1, 'rgba(255,255,255,0)')
+        hctx.fillStyle = sh
+        hctx.beginPath()
+        hctx.arc(fx, fy, br * .68, 0, Math.PI * 2)
+        hctx.fill()
+
+        // Edge refraction ring
+        hctx.strokeStyle = 'rgba(200,198,192,0.22)'
+        hctx.lineWidth = .8
+        hctx.beginPath()
+        hctx.arc(fx, fy, br * .96, 0, Math.PI * 2)
+        hctx.stroke()
+      }
+
+      heroT++
+      requestAnimationFrame(drawHeroBlobs)
+    }
+    drawHeroBlobs()
+
+    // Hero chip sequence
+    const chipDelays = [600, 1400, 2200, 3000, 4400]
+    const heroLabels = [
+      'reading package.json...',
+      'detecting stack...',
+      'matching skills...',
+      'generating MARK File...',
+      'complete ✓'
+    ]
+    const scanLabel = document.getElementById('heroScanLabel')
+    chipDelays.forEach((d, i) => {
+      setTimeout(() => {
+        document.getElementById('hc' + i)?.classList.add('show')
+        if (heroLabels[i]) scanLabel.textContent = heroLabels[i]
+      }, d)
+    })
+
+    /* ── NAV SCROLL (background tint only — hide/show handled below) ── */
+    window.addEventListener('scroll', () => {
+      const nav = document.getElementById('nav')
+      nav.style.background = window.scrollY > 40
+        ? 'rgba(247,246,243,0.96)'
+        : 'rgba(247,246,243,0.88)'
+    }, { passive: true })
+
+    /* ── DEMO TERMINAL ────────────────────────────────────────────── */
+    const demoLines = [
+      { delay: 400, cls: 'tb', text: '→ reading manifest files...' },
+      { delay: 1000, cls: 'tb', text: '→ stack: Next.js 14 · TypeScript · React 18' },
+      { delay: 1700, cls: 'tb', text: '→ core capability: web framework / SSR' },
+      { delay: 2400, cls: 'ty', text: '→ matching 59 skill patterns...' },
+      { delay: 3300, cls: 'tg', text: '→ 8 skills matched ✓' },
+      { delay: 4100, cls: 'tg', text: '→ CLAUDE.md generated ✓' },
+      { delay: 4900, cls: 'tg', text: '→ build ideas generated ✓' },
+    ]
+    const demoTags = ['next-js-app-router', 'typescript-strict', 'react-patterns', 'web-performance', 'tailwind', 'prisma-orm', 'zod-validation', '+1 more']
+    const demoSkills = [
+      { name: 'architecture-depth', pct: 92 },
+      { name: 'skill-match', pct: 72 },
+      { name: 'type-coverage', pct: 88 },
+    ]
+    const termEl = document.getElementById('demoTerminal')
+    const statusEl = document.getElementById('demoStatus')
+    const tagsEl = document.getElementById('demoTags')
+    const barsEl = document.getElementById('demoSkillBars')
+    let demoStarted = false
+
+    function startDemo() {
+      demoLines.forEach(l => {
+        setTimeout(() => {
+          const d = document.createElement('div')
+          d.className = 'tl'
+          d.innerHTML = `<span class="td">·</span><span class="${l.cls}">${l.text}</span>`
+          termEl.appendChild(d)
+          setTimeout(() => d.classList.add('show'), 20)
+        }, l.delay)
+      })
+      setTimeout(() => {
+        statusEl.textContent = 'complete ✓'
+        statusEl.style.background = 'var(--green-bg)'
+        statusEl.style.color = 'var(--green)'
+        statusEl.style.borderColor = 'var(--green-border)'
+        demoTags.forEach(t => {
+          const s = document.createElement('span')
+          s.className = 'tag'
+          s.textContent = t
+          tagsEl.appendChild(s)
+        })
+        demoSkills.forEach(s => {
+          const row = document.createElement('div')
+          row.className = 'skill-row'
+          row.innerHTML = `<span class="skill-name">${s.name}</span>
+        <div class="skill-bar"><div class="skill-fill" data-pct="${s.pct}"></div></div>
+        <span class="skill-pct">${s.pct}%</span>`
+          barsEl.appendChild(row)
+          setTimeout(() => row.querySelector('.skill-fill').style.width = s.pct + '%', 100)
+        })
+      }, 5200)
+    }
+
+    /* ── INTERSECTION OBSERVER ────────────────────────────────────── */
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible')
+          if (e.target.id === 'demoTerminal' && !demoStarted) {
+            demoStarted = true; startDemo()
+          }
+        }
+      })
+    }, { threshold: .15 })
+
+    document.querySelectorAll('.reveal').forEach(el => io.observe(el))
+    io.observe(termEl)
+
+    /* ── CUSTOM CURSOR (spotlight + magnetic-aware) ───────────────── */
+    const isFinePointer = window.matchMedia('(hover:hover) and (pointer:fine)').matches
+    if (isFinePointer) {
+      const dot = document.getElementById('cursorDot')
+      const ring = document.getElementById('cursorRing')
+      let cx = 0, cy = 0, rx = 0, ry = 0
+
+      document.addEventListener('mousemove', e => {
+        cx = e.clientX; cy = e.clientY
+        dot.style.left = cx + 'px'; dot.style.top = cy + 'px'
+      })
+
+      function ringLoop() {
+        rx += (cx - rx) * 0.18
+        ry += (cy - ry) * 0.18
+        ring.style.left = rx + 'px'; ring.style.top = ry + 'px'
+        requestAnimationFrame(ringLoop)
+      }
+      ringLoop()
+
+      document.querySelectorAll('a,button,.idea-card,.feature-cell').forEach(el => {
+        el.addEventListener('mouseenter', () => {
+          ring.classList.add('hover'); dot.classList.add('hover')
+        })
+        el.addEventListener('mouseleave', () => {
+          ring.classList.remove('hover'); dot.classList.remove('hover')
+        })
+      })
+
+      /* ── MAGNETIC BUTTONS ──────────────────────────────────────── */
+      document.querySelectorAll('.magnetic').forEach(btn => {
+        const wrap = btn.closest('.magnetic-wrap') || btn
+        wrap.addEventListener('mousemove', e => {
+          const r = btn.getBoundingClientRect()
+          const relX = (e.clientX - (r.left + r.width / 2)) * 0.28
+          const relY = (e.clientY - (r.top + r.height / 2)) * 0.28
+          btn.style.transform = `translate(${relX}px, ${relY}px)`
+        })
+        wrap.addEventListener('mouseleave', () => {
+          btn.style.transform = 'translate(0,0)'
+        })
+      })
+
+      /* ── AMBIENT BLUR SHAPE — follows cursor with lag ─────────── */
+      const blob = document.getElementById('blurShape')
+      let bx = 0, by = 0, blx = 0, bly = 0
+      document.addEventListener('mousemove', e => {
+        bx = e.clientX; by = e.clientY
+        if (!blob.classList.contains('active')) blob.classList.add('active')
+      })
+      function blobLoop() {
+        blx += (bx - blx) * 0.045
+        bly += (by - bly) * 0.045
+        blob.style.transform = `translate(${blx - 240}px, ${bly - 240}px)`
+        requestAnimationFrame(blobLoop)
+      }
+      blobLoop()
+    }
+
+    /* ── HIDE-ON-SCROLL NAV ────────────────────────────────────────── */
+    let lastScrollY = window.scrollY
+    const navEl = document.getElementById('nav')
+    window.addEventListener('scroll', () => {
+      const sy = window.scrollY
+      if (sy > lastScrollY && sy > 120) {
+        navEl.classList.add('nav-hidden')
+      } else {
+        navEl.classList.remove('nav-hidden')
+      }
+      lastScrollY = sy
+    }, { passive: true })
+
+    /* ── SCROLLSPY — highlight active nav link ─────────────────────── */
+    const spySections = ['demo', 'features', 'token']
+    const spyObserver = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          document.querySelectorAll('.nav-link').forEach(link => {
+            link.classList.toggle('active', link.getAttribute('href') === '#' + e.target.id)
+          })
+        }
+      })
+    }, { threshold: .4, rootMargin: '-20% 0px -60% 0px' })
+    spySections.forEach(id => {
+      const el = document.getElementById(id)
+      if (el) spyObserver.observe(el)
+    })
+
+    /* ── TOAST on Add-to-Chrome ────────────────────────────────────── */
+    const toast = document.getElementById('toast')
+    let toastTimer = null
+    function showToast() {
+      toast.classList.add('show')
+      clearTimeout(toastTimer)
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 2800)
+    }
+    document.querySelectorAll('.nav-cta, .btn-primary').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault()
+        showToast()
+      })
+    })
+  </script>
+</body>
+
+</html>
