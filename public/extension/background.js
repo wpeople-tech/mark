@@ -1,5 +1,5 @@
-var w = { CEB_API_BASE: "http://localhost:3000" };
-const f = w.CEB_API_BASE, T = `${f}/api/forge`, h = `${f}/api/opportunities`, l = {
+var k = { CEB_API_BASE: "https://mark-orpin.vercel.app" };
+const f = k.CEB_API_BASE, w = `${f}/api/forge`, T = `${f}/api/opportunities`, l = {
   status: "idle",
   lines: [],
   tags: [],
@@ -12,15 +12,15 @@ const f = w.CEB_API_BASE, T = `${f}/api/forge`, h = `${f}/api/opportunities`, l 
 };
 chrome.runtime.onMessage.addListener((e, t, a) => {
   if (console.log("[MARK Background] Message received:", e.type, e.owner ? `${e.owner}/${e.repo}` : ""), e.type === "START_SCAN")
-    return k(e.owner, e.repo).then(() => a({ ok: !0 })), !0;
+    return E(e.owner, e.repo).then(() => a({ ok: !0 })), !0;
   e.type === "RESET_STATE" && (chrome.storage.local.set({ scanState: l }), a({ ok: !0 }));
 });
-async function k(e, t) {
+async function E(e, t) {
   await chrome.storage.local.set({
     scanState: { ...l, status: "scanning", repoName: `${e}/${t}` }
   }), r({ type: "SCAN_STARTED" });
   try {
-    const a = await fetch(T, {
+    const a = await fetch(w, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ owner: e, repo: t })
@@ -44,11 +44,11 @@ async function k(e, t) {
         if (g.startsWith("data: "))
           try {
             const c = JSON.parse(g.slice(6));
-            await E(c), c.type === "content" && (p += c.text);
+            await d(c), c.type === "content" && (p += c.text);
           } catch {
           }
     }
-    d(p, `${e}/${t}`);
+    h(p, `${e}/${t}`);
   } catch (a) {
     await s({
       status: "error",
@@ -56,7 +56,7 @@ async function k(e, t) {
     }), r({ type: "SCAN_ERROR", error: a.message });
   }
 }
-async function E(e) {
+async function d(e) {
   const t = await u();
   switch (e.type) {
     case "status":
@@ -97,9 +97,9 @@ async function E(e) {
   }
   r({ type: "STATE_UPDATE", data: e });
 }
-async function d(e, t) {
+async function h(e, t) {
   try {
-    const a = await u(), i = await fetch(h, {
+    const a = await u(), i = await fetch(T, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ markFile: e, repoName: t, stack: a.tags })
