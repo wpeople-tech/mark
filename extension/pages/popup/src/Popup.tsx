@@ -18,12 +18,31 @@ export default function Popup() {
   const [repo, setRepo] = useState<RepoInfo | null>(null);
   const [state, setState] = useState<ScanState>(DEFAULT_STATE);
   const [activeTab, setActiveTab] = useState<'mark' | 'ideas'>('mark');
+  const [inputUrl, setInputUrl] = useState('');
 
+  // Load scan state from storage on mount
   useEffect(() => {
-    chrome.storage.local.get(['currentRepo', 'scanState'], result => {
-      console.log('[MARK Popup] Storage loaded:', result);
-      if (result.currentRepo) setRepo(result.currentRepo);
+    chrome.storage.local.get('scanState', result => {
       if (result.scanState) setState(result.scanState);
+    });
+  }, []);
+
+  // Detect repo: active tab URL first, then fall back to storage
+  useEffect(() => {
+    chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+      const tab = tabs[0];
+      if (tab?.url) {
+        const parsed = extractFromUrl(tab.url);
+        if (parsed) {
+          setRepo(parsed);
+          chrome.storage.local.set({ currentRepo: parsed });
+          return;
+        }
+      }
+      // Tab URL didn't match — try storage
+      chrome.storage.local.get('currentRepo', result => {
+        if (result.currentRepo) setRepo(result.currentRepo);
+      });
     });
   }, []);
 
@@ -45,22 +64,32 @@ export default function Popup() {
     };
   }, []);
 
-  const handleScan = () => {
-    console.log('[MARK Popup] handleScan called, repo:', repo);
-    if (!repo) return;
-    // Optimistic update — show scanning state immediately
+  const triggerScan = (target: RepoInfo) => {
+    setRepo(target);
     setState(prev => ({
       ...prev,
       status: 'scanning',
       lines: [{ type: 'status' as const, text: '→ Starting scan...', cls: 'blue' as const }],
     }));
-    console.log('[MARK Popup] Sending START_SCAN message');
-    chrome.runtime.sendMessage({ type: 'START_SCAN', owner: repo.owner, repo: repo.repo }, (response) => {
-      console.log('[MARK Popup] START_SCAN response:', response);
-      if (chrome.runtime.lastError) {
-        console.error('[MARK Popup] START_SCAN error:', chrome.runtime.lastError);
-      }
-    });
+    chrome.runtime.sendMessage({ type: 'START_SCAN', owner: target.owner, repo: target.repo });
+  };
+
+  const handleScan = () => {
+    if (!repo) return;
+    triggerScan(repo);
+  };
+
+  const handleManualScan = () => {
+    const parsed = extractFromUrl(inputUrl);
+    if (!parsed) return;
+    chrome.storage.local.set({ currentRepo: parsed });
+    triggerScan(parsed);
+  };
+
+  const inputParsed = extractFromUrl(inputUrl);
+
+  const handleInputKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && inputParsed) handleManualScan();
   };
 
   const handleRescan = () => {
@@ -92,8 +121,29 @@ export default function Popup() {
       <GlassZone state={state} />
 
       <div className="popup-body">
-        {!repo && (
-          <div className="no-repo">Open any GitHub repository to use MARK</div>
+        {!repo && state.status === 'idle' && (
+          <div className="manual-repo">
+            <div className="manual-label">Enter a GitHub repo URL</div>
+            <div className="manual-input-row">
+              <input
+                className="repo-input"
+                placeholder="github.com/owner/repo"
+                value={inputUrl}
+                onChange={e => setInputUrl(e.target.value)}
+                onKeyDown={handleInputKeyDown}
+              />
+              <button
+                className="scan-btn"
+                disabled={!inputParsed}
+                onClick={handleManualScan}
+              >
+                Scan
+              </button>
+            </div>
+            {!inputUrl && (
+              <div className="manual-hint">Open a GitHub repo or paste a URL above</div>
+            )}
+          </div>
         )}
 
         {repo && state.status === 'idle' && (
@@ -135,7 +185,7 @@ export default function Popup() {
                 <MarkFileTab state={state} onDownload={handleDownload} />
               )}
               {activeTab === 'ideas' && (
-                <IdeasTab ideas={state.ideas} />
+                <IdeasTab ideas={state.ideas} status={state.status} />
               )}
             </div>
           </>
@@ -302,9 +352,43 @@ function MarkFileTab({ state, onDownload }: { state: ScanState; onDownload: () =
   );
 }
 
-function IdeasTab({ ideas }: { ideas: BuildIdea[] }) {
+function IdeasTab({ ideas, status }: { ideas: BuildIdea[]; status: ScanState['status'] }) {
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    if (ideas.length > 0) {
+      setProgress(100);
+      return;
+    }
+    const timer = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 90) return prev;
+        const inc = Math.max(1, Math.round(5 * (1 - prev / 100)));
+        return Math.min(90, prev + inc);
+      });
+    }, 350);
+    return () => clearInterval(timer);
+  }, [ideas.length]);
+
+  if (ideas.length === 0 && status === 'scanning') {
+    return (
+      <div className="ideas-waiting">
+        <div className="ideas-waiting-icon">→</div>
+        <div className="ideas-waiting-text">Complete MARK File scan first</div>
+        <div className="ideas-waiting-hint">Build ideas generate automatically after the scan finishes</div>
+      </div>
+    );
+  }
+
   if (ideas.length === 0) {
-    return <div className="ideas-loading">Generating ideas...</div>;
+    return (
+      <div className="ideas-loading">
+        <div className="ideas-progress-track">
+          <div className="ideas-progress-fill" style={{ width: `${progress}%` }} />
+        </div>
+        <span className="ideas-progress-label">{progress}%</span>
+      </div>
+    );
   }
 
   return (
@@ -357,6 +441,19 @@ function base64ToBlob(base64: string, type: string): Blob {
     bytes[i] = binary.charCodeAt(i);
   }
   return new Blob([bytes], { type });
+}
+
+function extractFromUrl(url: string): RepoInfo | null {
+  try {
+    const u = new URL(url);
+    if (u.hostname !== 'github.com') return null;
+    const parts = u.pathname.split('/').filter(Boolean);
+    const excluded = ['explore', 'topics', 'trending', 'marketplace', 'settings', 'orgs'];
+    if (parts.length < 2 || excluded.includes(parts[0])) return null;
+    return { owner: parts[0], repo: parts[1] };
+  } catch {
+    return null;
+  }
 }
 
 interface Metaball {

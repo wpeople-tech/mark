@@ -1,1 +1,1 @@
-import('./all.iife_dev.js');
+(function(){"use strict";function r(){const e=location.pathname.split("/").filter(Boolean);return e.length<2||["explore","topics","trending","marketplace","settings","orgs"].includes(e[0])?null:{owner:e[0],repo:e[1]}}function t(){const e=r();e?chrome.storage.local.set({currentRepo:e}):chrome.storage.local.remove("currentRepo")}t();let o=location.pathname;new MutationObserver(()=>{location.pathname!==o&&(o=location.pathname,t())}).observe(document.body,{subtree:!0,childList:!0})})();

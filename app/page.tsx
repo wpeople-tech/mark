@@ -9,13 +9,26 @@ import { HowItWorksSection } from '@/components/landing/sections/HowItWorksSecti
 import { FeaturesSection } from '@/components/landing/sections/FeaturesSection'
 import { TokenSection } from '@/components/landing/sections/TokenSection'
 import { Footer } from '@/components/landing/sections/Footer'
-import { Toast } from '@/components/landing/ui/Toast'
+import { InstallGuide } from '@/components/landing/ui/InstallGuide'
+
+function downloadZip() {
+  const a = document.createElement('a')
+  a.href = '/mark-extension.zip'
+  a.download = 'mark-extension.zip'
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+}
 
 export default function Home() {
-  const [toastVisible, setToastVisible] = useState(false)
+  const [guideVisible, setGuideVisible] = useState(false)
 
-  const showToast = useCallback(() => setToastVisible(true), [])
-  const hideToast = useCallback(() => setToastVisible(false), [])
+  const handleCta = useCallback(() => {
+    downloadZip()
+    setGuideVisible(true)
+  }, [])
+
+  const hideGuide = useCallback(() => setGuideVisible(false), [])
 
   const scrollToDemo = useCallback(() => {
     const el = document.getElementById('demo')
@@ -29,19 +42,15 @@ export default function Home() {
 
   return (
     <>
-      <Nav onCtaClick={showToast} />
-      <HeroSection onCtaClick={showToast} onScrollToDemo={scrollToDemo} />
+      <Nav onCtaClick={handleCta} />
+      <HeroSection onCtaClick={handleCta} onScrollToDemo={scrollToDemo} />
       <TickerSection />
       <DemoSection />
       <HowItWorksSection />
       <FeaturesSection />
       <TokenSection />
       <Footer />
-      <Toast
-        visible={toastVisible}
-        message="Coming to Chrome Web Store soon"
-        onClose={hideToast}
-      />
+      <InstallGuide visible={guideVisible} onClose={hideGuide} />
     </>
   )
 }

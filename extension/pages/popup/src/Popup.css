@@ -175,6 +175,60 @@
   padding: 32px 16px;
 }
 
+.manual-repo {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px 0;
+}
+
+.manual-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.manual-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.repo-input {
+  flex: 1;
+  padding: 9px 12px;
+  font-size: 12px;
+  font-family: 'Geist Mono', 'Fira Code', monospace;
+  color: var(--ink);
+  background: white;
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.repo-input:focus {
+  border-color: var(--accent);
+}
+
+.repo-input::placeholder {
+  color: var(--muted);
+  font-family: inherit;
+}
+
+.scan-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.manual-hint {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+}
+
 .idle-state {
   display: flex;
   flex-direction: column;
@@ -366,6 +420,35 @@
   flex-shrink: 0;
 }
 
+/* Ideas — waiting for scan to complete */
+.ideas-waiting {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px 16px;
+  text-align: center;
+}
+
+.ideas-waiting-icon {
+  font-family: 'Geist Mono', 'Fira Code', monospace;
+  font-size: 13px;
+  color: var(--accent);
+  animation: eyepulse 2s ease-in-out infinite;
+}
+
+.ideas-waiting-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.ideas-waiting-hint {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
 /* Idea cards */
 .ideas-list {
   display: flex;
@@ -374,10 +457,35 @@
 }
 
 .ideas-loading {
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 32px 16px;
+}
+
+.ideas-progress-track {
+  width: 100%;
+  height: 4px;
+  background: var(--surface);
+  border-radius: 99px;
+  overflow: hidden;
+  border: 0.5px solid var(--border);
+}
+
+.ideas-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 99px;
+  transition: width 0.35s ease-out;
+}
+
+.ideas-progress-label {
+  font-size: 11px;
+  font-weight: 500;
   color: var(--muted);
-  font-size: 13px;
-  padding: 24px 0;
+  letter-spacing: 0.03em;
+  font-variant-numeric: tabular-nums;
 }
 
 .idea-card {

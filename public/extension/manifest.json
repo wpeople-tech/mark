@@ -56,16 +56,6 @@
       "css": [
         "content.css"
       ]
-    },
-    {
-      "matches": [
-        "http://*/*",
-        "https://*/*",
-        "<all_urls>"
-      ],
-      "js": [
-        "refresh.js"
-      ]
     }
   ],
   "web_accessible_resources": [

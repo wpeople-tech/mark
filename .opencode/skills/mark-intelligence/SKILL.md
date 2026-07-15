@@ -265,7 +265,7 @@ This project uses **Next.js 16.2.10** with breaking changes. Read the relevant g
 
 1. **Plan first** — every step starts with a plan file in `resources/plan/`
 2. **Implement** — code the plan, one file/section at a time
-3. **Verify** — run `npm run lint` and `npm run build` after each step
+3. **Verify** — run `yarn lint` and `yarn build` after each step
 4. **Reference** — always use design tokens from this skill, never guess colors/spacing
 5. **Extension** — built separate from the Next.js app; uses the boilerplate at `https://github.com/Jonghakseo/chrome-extension-boilerplate-react-vite`
 6. **Deployment** — Vercel CLI or GitHub integration; set env vars in Vercel Dashboard

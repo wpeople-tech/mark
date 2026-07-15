@@ -1,48 +1,5 @@
-(function() {let __HMR_ID = "chrome-extension-hmr";
-const LOCAL_RELOAD_SOCKET_PORT = 8081;
-const LOCAL_RELOAD_SOCKET_URL = `ws://localhost:${LOCAL_RELOAD_SOCKET_PORT}`;
-
-const DO_UPDATE = 'do_update';
-const DONE_UPDATE = 'done_update';
-
-var MessageInterpreter = {
-  send: (message) => JSON.stringify(message),
-  receive: (serializedMessage) => JSON.parse(serializedMessage),
-};
-
-var initClient = ({ id, onUpdate }) => {
-  const ws = new WebSocket(LOCAL_RELOAD_SOCKET_URL);
-
-  ws.onopen = () => {
-    ws.addEventListener('message', event => {
-      const message = MessageInterpreter.receive(String(event.data));
-
-      if (message.type === DO_UPDATE && message.id === id) {
-        onUpdate();
-        ws.send(MessageInterpreter.send({ type: DONE_UPDATE }));
-      }
-    });
-  };
-};
-
-(() => {
-  const reload = () => {
-    chrome.runtime.reload();
-  };
-
-  initClient({
-    // @ts-expect-error That's because of the dynamic code loading
-    id: __HMR_ID,
-    onUpdate: reload,
-  });
-})();
-
-})();
-var define_process_env_default = { CEB_API_BASE: "http://localhost:3000" };
-const API_BASE = define_process_env_default.CEB_API_BASE;
-const FORGE_ENDPOINT = `${API_BASE}/api/forge`;
-const OPPORTUNITIES_ENDPOINT = `${API_BASE}/api/opportunities`;
-const DEFAULT_STATE = {
+var w = { CEB_API_BASE: "http://localhost:3000" };
+const f = w.CEB_API_BASE, T = `${f}/api/forge`, h = `${f}/api/opportunities`, l = {
   status: "idle",
   lines: [],
   tags: [],
@@ -53,132 +10,112 @@ const DEFAULT_STATE = {
   ideas: [],
   remaining: 5
 };
-chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
-  console.log("[MARK Background] Message received:", msg.type, msg.owner ? `${msg.owner}/${msg.repo}` : "");
-  if (msg.type === "START_SCAN") {
-    startScan(msg.owner, msg.repo).then(() => sendResponse({ ok: true }));
-    return true;
-  }
-  if (msg.type === "RESET_STATE") {
-    chrome.storage.local.set({ scanState: DEFAULT_STATE });
-    sendResponse({ ok: true });
-  }
+chrome.runtime.onMessage.addListener((e, t, a) => {
+  if (console.log("[MARK Background] Message received:", e.type, e.owner ? `${e.owner}/${e.repo}` : ""), e.type === "START_SCAN")
+    return k(e.owner, e.repo).then(() => a({ ok: !0 })), !0;
+  e.type === "RESET_STATE" && (chrome.storage.local.set({ scanState: l }), a({ ok: !0 }));
 });
-async function startScan(owner, repo) {
+async function k(e, t) {
   await chrome.storage.local.set({
-    scanState: { ...DEFAULT_STATE, status: "scanning", repoName: `${owner}/${repo}` }
-  });
-  broadcast({ type: "SCAN_STARTED" });
+    scanState: { ...l, status: "scanning", repoName: `${e}/${t}` }
+  }), r({ type: "SCAN_STARTED" });
   try {
-    const res = await fetch(FORGE_ENDPOINT, {
+    const a = await fetch(T, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ owner, repo })
+      body: JSON.stringify({ owner: e, repo: t })
     });
-    if (res.status === 429) {
-      await updateState({ status: "rate_limited", remaining: 0 });
-      broadcast({ type: "RATE_LIMITED" });
+    if (a.status === 429) {
+      await s({ status: "rate_limited", remaining: 0 }), r({ type: "RATE_LIMITED" });
       return;
     }
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
-    }
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
-    let markFileBuffer = "";
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() || "";
-      for (const line of lines) {
-        if (!line.startsWith("data: ")) continue;
-        try {
-          const data = JSON.parse(line.slice(6));
-          await handleSSEEvent(data);
-          if (data.type === "content") {
-            markFileBuffer += data.text;
+    if (!a.ok)
+      throw new Error(`HTTP ${a.status}`);
+    const i = a.body.getReader(), n = new TextDecoder();
+    let o = "", p = "";
+    for (; ; ) {
+      const { done: y, value: m } = await i.read();
+      if (y) break;
+      o += n.decode(m, { stream: !0 });
+      const S = o.split(`
+`);
+      o = S.pop() || "";
+      for (const g of S)
+        if (g.startsWith("data: "))
+          try {
+            const c = JSON.parse(g.slice(6));
+            await E(c), c.type === "content" && (p += c.text);
+          } catch {
           }
-        } catch {
-        }
-      }
     }
-    fetchOpportunities(markFileBuffer, `${owner}/${repo}`);
-  } catch (err) {
-    await updateState({
+    d(p, `${e}/${t}`);
+  } catch (a) {
+    await s({
       status: "error",
-      error: err.message ?? "Scan failed. Please try again."
-    });
-    broadcast({ type: "SCAN_ERROR", error: err.message });
+      error: a.message ?? "Scan failed. Please try again."
+    }), r({ type: "SCAN_ERROR", error: a.message });
   }
 }
-async function handleSSEEvent(data) {
-  const current = await getState();
-  switch (data.type) {
+async function E(e) {
+  const t = await u();
+  switch (e.type) {
     case "status":
-      await updateState({
-        remaining: data.remaining ?? current.remaining,
+      await s({
+        remaining: e.remaining ?? t.remaining,
         lines: [
-          ...current.lines,
-          { type: "status", text: data.message, cls: "blue" }
+          ...t.lines,
+          { type: "status", text: e.message, cls: "blue" }
         ]
       });
       break;
     case "stack":
-      await updateState({ tags: data.tags });
+      await s({ tags: e.tags });
       break;
     case "skills":
-      await updateState({ skills: data.skills });
+      await s({ skills: e.skills });
       break;
     case "content":
-      await updateState({ markFile: current.markFile + data.text });
+      await s({ markFile: t.markFile + e.text });
       break;
     case "done":
-      await updateState({
+      await s({
         status: "done",
-        zipBase64: data.zipBase64,
-        markFile: data.markFile,
-        tags: data.tags,
-        skills: data.skills,
-        remaining: data.remaining ?? current.remaining,
+        zipBase64: e.zipBase64,
+        markFile: e.markFile,
+        tags: e.tags,
+        skills: e.skills,
+        remaining: e.remaining ?? t.remaining,
         lines: [
-          ...current.lines,
+          ...t.lines,
           { type: "done", text: "→ Complete ✓", cls: "green" }
         ]
       });
       break;
     case "error":
-      await updateState({ status: "error", error: data.message });
+      await s({ status: "error", error: e.message });
       break;
   }
-  broadcast({ type: "STATE_UPDATE", data });
+  r({ type: "STATE_UPDATE", data: e });
 }
-async function fetchOpportunities(markFile, repoName) {
+async function d(e, t) {
   try {
-    const current = await getState();
-    const res = await fetch(OPPORTUNITIES_ENDPOINT, {
+    const a = await u(), i = await fetch(h, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ markFile, repoName, stack: current.tags })
-    });
-    const { ideas } = await res.json();
-    await updateState({ ideas });
-    broadcast({ type: "IDEAS_READY", ideas });
+      body: JSON.stringify({ markFile: e, repoName: t, stack: a.tags })
+    }), { ideas: n } = await i.json();
+    await s({ ideas: n }), r({ type: "IDEAS_READY", ideas: n });
   } catch {
   }
 }
-async function getState() {
-  const result = await chrome.storage.local.get("scanState");
-  return result.scanState ?? DEFAULT_STATE;
+async function u() {
+  return (await chrome.storage.local.get("scanState")).scanState ?? l;
 }
-async function updateState(partial) {
-  const current = await getState();
-  await chrome.storage.local.set({ scanState: { ...current, ...partial } });
+async function s(e) {
+  const t = await u();
+  await chrome.storage.local.set({ scanState: { ...t, ...e } });
 }
-function broadcast(msg) {
-  chrome.runtime.sendMessage(msg).catch(() => {
+function r(e) {
+  chrome.runtime.sendMessage(e).catch(() => {
   });
 }
-//# sourceMappingURL=background.js.map
