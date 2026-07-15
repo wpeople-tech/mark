@@ -1,0 +1,85 @@
+{
+  "manifest_version": 3,
+  "default_locale": "en",
+  "name": "MARK Intelligence",
+  "version": "0.5.0",
+  "description": "Scan any GitHub repo. Get a full intelligence report + 3 pump.fun-ready build ideas.",
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "permissions": [
+    "storage",
+    "scripting",
+    "tabs",
+    "notifications",
+    "sidePanel",
+    "downloads"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup/index.html",
+    "default_icon": "icon-34.png"
+  },
+  "icons": {
+    "128": "icon-128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*",
+        "<all_urls>"
+      ],
+      "js": [
+        "content/all.iife.js"
+      ]
+    },
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*",
+        "<all_urls>"
+      ],
+      "js": [
+        "content-ui/all.iife.js"
+      ]
+    },
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*",
+        "<all_urls>"
+      ],
+      "css": [
+        "content.css"
+      ]
+    },
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*",
+        "<all_urls>"
+      ],
+      "js": [
+        "refresh.js"
+      ]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "*.js",
+        "*.css",
+        "*.svg",
+        "icon-128.png",
+        "icon-34.png"
+      ],
+      "matches": [
+        "*://*/*"
+      ]
+    }
+  ]
+}
