@@ -43,4 +43,5 @@ export interface ScanState {
   ideas: BuildIdea[];
   remaining: number;
   error?: string;
+  ideasError?: string;
 }

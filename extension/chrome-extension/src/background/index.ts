@@ -26,6 +26,10 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     chrome.storage.local.set({ scanState: DEFAULT_STATE });
     sendResponse({ ok: true });
   }
+  if (msg.type === 'RETRY_OPPORTUNITIES') {
+    retryOpportunities().then(() => sendResponse({ ok: true }));
+    return true;
+  }
 });
 
 async function startScan(owner: string, repo: string): Promise<void> {
@@ -146,12 +150,28 @@ async function fetchOpportunities(markFile: string, repoName: string): Promise<v
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ markFile, repoName, stack: current.tags }),
     });
-    const { ideas } = await res.json();
-    await updateState({ ideas: ideas as BuildIdea[] });
-    broadcast({ type: 'IDEAS_READY', ideas });
-  } catch {
-    // Non-blocking — ignore errors
+
+    const json = await res.json();
+
+    if (json.error) {
+      await updateState({ ideasError: `Failed: ${json.error}` });
+      broadcast({ type: 'IDEAS_ERROR', error: json.error });
+      return;
+    }
+
+    await updateState({ ideas: json.ideas as BuildIdea[], ideasError: undefined });
+    broadcast({ type: 'IDEAS_READY', ideas: json.ideas });
+  } catch (err: any) {
+    await updateState({ ideasError: err?.message ?? 'Failed to generate opportunities' });
+    broadcast({ type: 'IDEAS_ERROR', error: err?.message });
   }
+}
+
+async function retryOpportunities(): Promise<void> {
+  const current = await getState();
+  if (!current.markFile || !current.repoName) return;
+  await updateState({ ideasError: undefined });
+  await fetchOpportunities(current.markFile, current.repoName);
 }
 
 async function getState(): Promise<ScanState> {

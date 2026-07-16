@@ -18,15 +18,16 @@ const configs = Object.entries(getContentScriptEntries(matchesDir)).map(([name, 
     },
     publicDir: resolve(rootDir, 'public'),
     plugins: [IS_DEV && makeEntryPointPlugin()],
-    build: {
-      lib: {
-        name: name,
-        formats: ['iife'],
-        entry,
-        fileName: name,
+      build: {
+        lib: {
+          name: name,
+          formats: ['iife'],
+          entry,
+          fileName: name,
+        },
+        outDir: resolve(rootDir, '..', '..', 'dist', 'content'),
+        emptyOutDir: false,
       },
-      outDir: resolve(rootDir, '..', '..', 'dist', 'content'),
-    },
   }),
 );
 

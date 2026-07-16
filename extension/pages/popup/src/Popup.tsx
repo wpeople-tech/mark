@@ -50,7 +50,7 @@ export default function Popup() {
     console.log('[MARK Popup] Registering message listener');
     const listener = (msg: any) => {
       console.log('[MARK Popup] Received message:', msg.type);
-      if (['STATE_UPDATE', 'SCAN_STARTED', 'IDEAS_READY', 'RATE_LIMITED', 'SCAN_ERROR'].includes(msg.type)) {
+      if (['STATE_UPDATE', 'SCAN_STARTED', 'IDEAS_READY', 'IDEAS_ERROR', 'RATE_LIMITED', 'SCAN_ERROR'].includes(msg.type)) {
         chrome.storage.local.get('scanState', result => {
           console.log('[MARK Popup] scanState from storage:', result.scanState?.status);
           if (result.scanState) setState(result.scanState);
@@ -106,6 +106,11 @@ export default function Popup() {
       url,
       filename: `mark-${state.repoName.replace('/', '-')}.zip`,
     });
+  };
+
+  const handleRetryOpportunities = () => {
+    setState(prev => ({ ...prev, ideasError: undefined }));
+    chrome.runtime.sendMessage({ type: 'RETRY_OPPORTUNITIES' });
   };
 
   return (
@@ -185,7 +190,7 @@ export default function Popup() {
                 <MarkFileTab state={state} onDownload={handleDownload} />
               )}
               {activeTab === 'ideas' && (
-                <IdeasTab ideas={state.ideas} status={state.status} />
+                <IdeasTab state={state} onRetry={handleRetryOpportunities} />
               )}
             </div>
           </>
@@ -326,6 +331,13 @@ function MarkFileTab({ state, onDownload }: { state: ScanState; onDownload: () =
         </div>
       )}
 
+      {state.status === 'done' && state.markFile && (
+        <div className="mark-preview-section">
+          <div className="mark-preview-header">CLAUDE.md Preview</div>
+          <div className="mark-preview">{state.markFile}</div>
+        </div>
+      )}
+
       {state.status === 'done' && (
         <div className="file-list">
           <div className="file-row" onClick={onDownload}>
@@ -352,7 +364,8 @@ function MarkFileTab({ state, onDownload }: { state: ScanState; onDownload: () =
   );
 }
 
-function IdeasTab({ ideas, status }: { ideas: BuildIdea[]; status: ScanState['status'] }) {
+function IdeasTab({ state, onRetry }: { state: ScanState; onRetry: () => void }) {
+  const { ideas, status, ideasError } = state;
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
@@ -369,6 +382,18 @@ function IdeasTab({ ideas, status }: { ideas: BuildIdea[]; status: ScanState['st
     }, 350);
     return () => clearInterval(timer);
   }, [ideas.length]);
+
+  if (ideasError) {
+    return (
+      <div className="ideas-error">
+        <div className="ideas-error-text">Failed to generate build ideas</div>
+        <div className="ideas-error-hint">Please try again</div>
+        <button className="ideas-retry-btn" onClick={onRetry}>
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   if (ideas.length === 0 && status === 'scanning') {
     return (

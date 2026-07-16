@@ -58,30 +58,47 @@ export async function generateOpportunities(
   repoName: string,
   stack: string[],
 ): Promise<any[]> {
-  try {
-    console.log("generating opportunities...");
-    const response = await callWithRetry(() =>
-      client.chat.completions.create({
-        model: "poolside/laguna-m.1:free",
-        max_tokens: 1500,
-        messages: [
-          {
-            role: "system",
-            content: OPPORTUNITIES_SYSTEM_PROMPT,
-          },
-          {
-            role: "user",
-            content: `Repo: ${repoName}\nStack: ${stack.join(", ")}\n\nMARK File:\n${markFile.slice(0, 3000)}`,
-          },
-        ],
-      }),
-    );
-    console.log("opportunities generated...", response.choices[0]?.message?.content);
+  const maxRetries = 3;
+  let lastError: Error | null = null;
 
-    const raw = response.choices[0]?.message?.content ?? "[]";
-    return JSON.parse(raw.trim());
-  } catch (err) {
-    console.error("generateOpportunities:::ERROR:", err);
-    return [];
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`generating opportunities (attempt ${attempt}/${maxRetries})...`);
+
+      const response = await callWithRetry(() =>
+        client.chat.completions.create({
+          model: "poolside/laguna-m.1:free",
+          max_tokens: 1500,
+          messages: [
+            {
+              role: "system",
+              content: OPPORTUNITIES_SYSTEM_PROMPT,
+            },
+            {
+              role: "user",
+              content: `Repo: ${repoName}\nStack: ${stack.join(", ")}\n\nMARK File:\n${markFile.slice(0, 3000)}`,
+            },
+          ],
+        }),
+      );
+
+      const raw = response.choices[0]?.message?.content ?? "[]";
+      const ideas = JSON.parse(raw.trim());
+
+      console.log("opportunities generated successfully:", ideas);
+      return ideas;
+    } catch (err: any) {
+      lastError = err;
+      console.error(`generateOpportunities attempt ${attempt} failed:`, err?.message ?? err);
+
+      if (attempt < maxRetries) {
+        const delay = Math.pow(2, attempt - 1) * 1000;
+        await new Promise((r) => setTimeout(r, delay));
+      }
+    }
   }
+
+  throw new Error(
+    `Failed to generate opportunities after ${maxRetries} attempts: ${lastError?.message ?? "Unknown error"}`,
+  );
 }

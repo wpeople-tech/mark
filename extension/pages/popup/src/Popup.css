@@ -373,6 +373,48 @@
 }
 
 /* File list */
+.mark-preview-section {
+  border-bottom: 0.5px solid var(--border);
+  margin-bottom: 4px;
+}
+
+.mark-preview-header {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 10px 12px 4px;
+}
+
+.mark-preview {
+  background: var(--term-bg);
+  color: var(--term-text);
+  font-family: var(--font-mono, 'SF Mono', 'Fira Code', monospace);
+  font-size: 11px;
+  line-height: 1.6;
+  padding: 12px;
+  margin: 6px 12px 12px;
+  border-radius: var(--radius);
+  max-height: 240px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.mark-preview::-webkit-scrollbar {
+  width: 4px;
+}
+
+.mark-preview::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.mark-preview::-webkit-scrollbar-thumb {
+  background: var(--term-dim);
+  border-radius: 99px;
+}
+
 .file-list {
   display: flex;
   flex-direction: column;
@@ -447,6 +489,46 @@
   font-size: 11px;
   color: var(--muted);
   line-height: 1.5;
+}
+
+/* Ideas — error state */
+.ideas-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px 16px;
+  text-align: center;
+}
+
+.ideas-error-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.ideas-error-hint {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.ideas-retry-btn {
+  margin-top: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 20px;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.ideas-retry-btn:hover {
+  background: var(--border);
 }
 
 /* Idea cards */

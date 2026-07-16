@@ -3,7 +3,7 @@ import { checkRateLimit } from '@/lib/rateLimit'
 import { packRepo } from '@/lib/github'
 import { detectStack } from '@/lib/detectStack'
 import { selectSkills } from '@/lib/selectSkills'
-import { streamMarkFile } from '@/app/lib/llm'
+import { streamMarkFile } from '@/lib/llm'
 import { buildZip } from '@/lib/buildZip'
 
 export const runtime = 'nodejs'

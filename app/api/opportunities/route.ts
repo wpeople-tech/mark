@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { generateOpportunities } from '@/app/lib/llm'
+import { generateOpportunities } from '@/lib/llm'
 
 export const runtime = 'nodejs'
 

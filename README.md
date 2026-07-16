@@ -296,7 +296,7 @@ markintel.xyz/               ← Single Vercel Project
 │   ├── detectStack.ts       ← stack keyword scoring
 │   ├── selectSkills.ts      ← top 6-8 skill selector dari 59 skills
 │   ├── buildZip.ts          ← fflate ZIP builder
-│   ├── llm.ts             ← OpenRouter + retry logic
+│   ├── llm.ts               ← OpenRouter + retry logic (actual location)
 │   └── rateLimit.ts         ← Upstash Redis sliding window
 ├── public/
 │   ├── og-image.png         ← 1200×630px untuk Twitter/OG sharing
@@ -312,21 +312,30 @@ markintel.xyz/               ← Single Vercel Project
 ```json
 {
   "dependencies": {
-    "next": "14.x",
-    "react": "18.x",
-    "react-dom": "18.x",
-    "openai": "latest",
-    "@upstash/ratelimit": "latest",
-    "@upstash/redis": "latest",
-    "fflate": "latest"
+    "next": "16.x",
+    "react": "19.x",
+    "react-dom": "19.x",
+    "openai": "^4.86.2",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.38.0",
+    "fflate": "^0.8.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.24.0",
+    "tailwind-merge": "^3.6.0",
+    "tw-animate-css": "^1.4.0",
+    "@base-ui/react": "^1.6.0"
   },
   "devDependencies": {
-    "typescript": "5.x",
-    "@types/node": "latest",
-    "@types/react": "latest",
-    "tailwindcss": "3.x",
-    "postcss": "latest",
-    "autoprefixer": "latest"
+    "typescript": "^5",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "tailwindcss": "^4",
+    "@tailwindcss/postcss": "^4",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.10",
+    "shadcn": "^4.13.0"
   }
 }
 ```
@@ -410,144 +419,152 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
 
-export const ratelimit = new Ratelimit({
-  redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(5, '24h'),
-  analytics: true,
-  prefix: 'mark:scan',
-})
-
-export async function checkRateLimit(ip: string): Promise<{
+interface LimitResult {
   success: boolean
   remaining: number
   reset: number
-}> {
-  const { success, remaining, reset } = await ratelimit.limit(ip)
-  return { success, remaining, reset }
+}
+
+function createInMemoryLimiter() {
+  const hits = new Map<string, { count: number; resetAt: number }>()
+
+  return {
+    async limit(ip: string): Promise<LimitResult> {
+      const now = Date.now()
+      const entry = hits.get(ip)
+
+      if (!entry || now > entry.resetAt) {
+        const resetAt = now + 24 * 60 * 60 * 1000
+        hits.set(ip, { count: 1, resetAt })
+        return { success: true, remaining: 4, reset: Math.ceil(resetAt / 1000) }
+      }
+
+      entry.count += 1
+      if (entry.count > 5) {
+        return { success: false, remaining: 0, reset: Math.ceil(entry.resetAt / 1000) }
+      }
+
+      return { success: true, remaining: 5 - entry.count, reset: Math.ceil(entry.resetAt / 1000) }
+    },
+  }
+}
+
+const hasRedis = !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
+
+const limiter = hasRedis
+  ? new Ratelimit({
+      redis: Redis.fromEnv(),
+      limiter: Ratelimit.slidingWindow(5, '24h'),
+      analytics: true,
+      prefix: 'mark:scan',
+    })
+  : createInMemoryLimiter()
+
+export async function checkRateLimit(ip: string): Promise<LimitResult> {
+  const result = await limiter.limit(ip)
+  return { success: result.success, remaining: result.remaining, reset: result.reset }
 }
 ```
 
 ### 5.7 lib/llm.ts
 
 ```typescript
-import OpenAI from 'openai'
+"use server";
+
+import OpenAI from "openai";
+import { MARK_SYSTEM_PROMPT, OPPORTUNITIES_SYSTEM_PROMPT } from "@/lib/prompts";
 
 const client = new OpenAI({
-  baseURL: 'https://openrouter.ai/api/v1',
+  baseURL: "https://openrouter.ai/api/v1",
   apiKey: process.env.OPENROUTER_API_KEY,
-})
-
-export const MARK_SYSTEM_PROMPT = `You are MARK, a GitHub repository intelligence engine.
-
-Given a repository's manifest content and detected stack, generate a comprehensive CLAUDE.md file.
-
-The CLAUDE.md must include:
-- ## Project Overview: what the repo does, its core capability, intended audience
-- ## Tech Stack: complete breakdown (language, framework, build system, testing, deployment)
-- ## Architecture Patterns: key design decisions, patterns detected in the codebase
-- ## Core Capabilities: what this codebase can actually DO (not just what it is)
-- ## Coding Conventions: naming, file organization, patterns from the manifests
-- ## Development Workflow: setup steps, build commands, testing
-- ## Selected Claude Skills: the specific skill files selected and why
-- ## Known Constraints: platform limitations, dependencies to be aware of
-
-Be specific and grounded in the actual manifest content.
-Do not invent capabilities that aren't evident from the files.
-Output the CLAUDE.md content directly. No preamble, no explanation.`
-
-export const OPPORTUNITIES_SYSTEM_PROMPT = `You are a crypto product strategist specializing in pump.fun utility launches.
-
-Given a GitHub repo's MARK File (intelligence report), generate exactly 3 utility website ideas.
-
-Each idea must:
-1. Use the repo's ACTUAL core technical capability as the engine (not just "make a website about this")
-2. Target a specific audience that already exists and would genuinely use it
-3. Be buildable by 1 developer in 1-2 weeks (realistic scope)
-4. Have a clear reason why token holders would exist (demand driver)
-
-Respond ONLY with valid JSON. No markdown. No explanation. No preamble.
-
-Required format:
-[
-  {
-    "websiteName": "ToolName",
-    "domain": "toolname.xyz",
-    "ticker": "$TOOL",
-    "valueProp": "One sentence: what it does and who it helps.",
-    "pumpFunAngle": "Why token holders would exist. What creates demand. Be specific.",
-    "buildEffort": "3 days",
-    "coreCapabilityUsed": "Which specific capability from the MARK File this uses"
-  }
-]`
+});
 
 async function callWithRetry<T>(
   fn: () => Promise<T>,
-  maxRetries = 3
+  maxRetries = 3,
 ): Promise<T> {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      return await fn()
+      return await fn();
     } catch (err: any) {
       if (err?.status === 429) {
-        const retryAfter = parseInt(err.headers?.['retry-after'] ?? '5')
-        await new Promise(r => setTimeout(r, retryAfter * 1000 * (attempt + 1)))
-        continue
+        const retryAfter = parseInt(err.headers?.["retry-after"] ?? "5");
+        await new Promise((r) =>
+          setTimeout(r, retryAfter * 1000 * (attempt + 1)),
+        );
+        continue;
       }
-      throw err
+      throw err;
     }
   }
-  throw new Error('Max retries exceeded')
+  throw new Error("Max retries exceeded");
 }
 
-export function streamMarkFile(context: string, tags: string[], skills: string[]) {
+export async function streamMarkFile(
+  context: string,
+  tags: string[],
+  skills: string[],
+) {
   return callWithRetry(() =>
     client.chat.completions.create({
-      model: 'poolside/laguna-m.1:free',
+      model: "poolside/laguna-m.1:free",
       max_tokens: 4000,
       messages: [
         {
-          role: 'system',
+          role: "system",
           content: MARK_SYSTEM_PROMPT,
         },
         {
-          role: 'user',
-          content: `Stack detected: ${tags.join(', ')}\nSelected skills: ${skills.join(', ')}\n\nManifest content:\n${context}`,
+          role: "user",
+          content: `Stack detected: ${tags.join(", ")}\nSelected skills: ${skills.join(", ")}\n\nManifest content:\n${context}`,
         },
       ],
       stream: true,
-    })
-  )
+    }),
+  );
 }
 
 export async function generateOpportunities(
   markFile: string,
   repoName: string,
-  stack: string[]
+  stack: string[],
 ): Promise<any[]> {
-  const response = await callWithRetry(() =>
-    client.chat.completions.create({
-      model: 'poolside/laguna-m.1:free',
-      max_tokens: 1500,
-      messages: [
-        {
-          role: 'system',
-          content: OPPORTUNITIES_SYSTEM_PROMPT,
-        },
-        {
-          role: 'user',
-          content: `Repo: ${repoName}\nStack: ${stack.join(', ')}\n\nMARK File:\n${markFile.slice(0, 3000)}`,
-        },
-      ],
-    })
-  )
+  const maxRetries = 3;
+  let lastError: Error | null = null;
 
-  const raw = response.choices[0]?.message?.content ?? '[]'
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await callWithRetry(() =>
+        client.chat.completions.create({
+          model: "poolside/laguna-m.1:free",
+          max_tokens: 1500,
+          messages: [
+            {
+              role: "system",
+              content: OPPORTUNITIES_SYSTEM_PROMPT,
+            },
+            {
+              role: "user",
+              content: `Repo: ${repoName}\nStack: ${stack.join(", ")}\n\nMARK File:\n${markFile.slice(0, 3000)}`,
+            },
+          ],
+        }),
+      );
 
-  try {
-    return JSON.parse(raw.trim())
-  } catch {
-    return []
+      const raw = response.choices[0]?.message?.content ?? "[]";
+      return JSON.parse(raw.trim());
+    } catch (err: any) {
+      lastError = err;
+      if (attempt < maxRetries) {
+        const delay = Math.pow(2, attempt - 1) * 1000;
+        await new Promise((r) => setTimeout(r, delay));
+      }
+    }
   }
+
+  throw new Error(
+    `Failed to generate opportunities after ${maxRetries} attempts: ${lastError?.message ?? "Unknown error"}`,
+  );
 }
 ```
 
@@ -781,17 +798,7 @@ export function selectSkills(tags: string[], maxSkills = 8): string[] {
 
 ```typescript
 import { strToU8, zipSync } from 'fflate'
-
-const SKILL_CONTENT: Record<string, string> = {
-  'next-js-app-router': `# Next.js App Router Skill
-## Key Patterns
-- Use Server Components by default, Client Components only when needed
-- Co-locate loading.tsx and error.tsx with their routes
-- Use route groups () for layout organization without URL impact
-- Prefer generateStaticParams for static generation where possible
-`,
-  // ... (semua 59 skills content)
-}
+import { SKILL_CONTENT } from './skillsContent'
 
 function buildSetupGuide(owner: string, repo: string, skills: string[]): string {
   return `# MARK Intelligence — Setup Guide
@@ -851,6 +858,21 @@ import { buildZip } from '@/lib/buildZip'
 
 export const runtime = 'nodejs'  // WAJIB — fflate butuh Node, bukan Edge
 
+export async function OPTIONS(req: NextRequest) {
+  const origin = req.headers.get('origin') || ''
+  const isExtension = origin.startsWith('chrome-extension://')
+  const isSelf = origin === process.env.NEXT_PUBLIC_APP_URL
+
+  return new Response(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': isExtension || isSelf ? origin : 'null',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  })
+}
+
 export async function POST(req: NextRequest) {
   // CORS untuk Chrome Extension
   const origin = req.headers.get('origin') || ''
@@ -861,11 +883,6 @@ export async function POST(req: NextRequest) {
     'Access-Control-Allow-Origin': isExtension || isSelf ? origin : 'null',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
-  }
-
-  // Handle preflight
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { status: 204, headers: corsHeaders })
   }
 
   // Rate limit
@@ -958,15 +975,22 @@ import { generateOpportunities } from '@/lib/llm'
 
 export const runtime = 'nodejs'
 
+export async function OPTIONS() {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  })
+}
+
 export async function POST(req: NextRequest) {
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
-  }
-
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { status: 204, headers: corsHeaders })
   }
 
   try {

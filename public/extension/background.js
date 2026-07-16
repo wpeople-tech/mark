@@ -1,5 +1,5 @@
-var k = { CEB_API_BASE: "https://mark-orpin.vercel.app" };
-const f = k.CEB_API_BASE, w = `${f}/api/forge`, T = `${f}/api/opportunities`, l = {
+var g = { CEB_API_BASE: "https://mark-orpin.vercel.app" };
+const y = g.CEB_API_BASE, w = `${y}/api/forge`, k = `${y}/api/opportunities`, l = {
   status: "idle",
   lines: [],
   tags: [],
@@ -10,112 +10,122 @@ const f = k.CEB_API_BASE, w = `${f}/api/forge`, T = `${f}/api/opportunities`, l 
   ideas: [],
   remaining: 5
 };
-chrome.runtime.onMessage.addListener((e, t, a) => {
+chrome.runtime.onMessage.addListener((e, a, t) => {
   if (console.log("[MARK Background] Message received:", e.type, e.owner ? `${e.owner}/${e.repo}` : ""), e.type === "START_SCAN")
-    return E(e.owner, e.repo).then(() => a({ ok: !0 })), !0;
-  e.type === "RESET_STATE" && (chrome.storage.local.set({ scanState: l }), a({ ok: !0 }));
+    return T(e.owner, e.repo).then(() => t({ ok: !0 })), !0;
+  if (e.type === "RESET_STATE" && (chrome.storage.local.set({ scanState: l }), t({ ok: !0 })), e.type === "RETRY_OPPORTUNITIES")
+    return _().then(() => t({ ok: !0 })), !0;
 });
-async function E(e, t) {
+async function T(e, a) {
   await chrome.storage.local.set({
-    scanState: { ...l, status: "scanning", repoName: `${e}/${t}` }
-  }), r({ type: "SCAN_STARTED" });
+    scanState: { ...l, status: "scanning", repoName: `${e}/${a}` }
+  }), i({ type: "SCAN_STARTED" });
   try {
-    const a = await fetch(w, {
+    const t = await fetch(w, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ owner: e, repo: t })
+      body: JSON.stringify({ owner: e, repo: a })
     });
-    if (a.status === 429) {
-      await s({ status: "rate_limited", remaining: 0 }), r({ type: "RATE_LIMITED" });
+    if (t.status === 429) {
+      await r({ status: "rate_limited", remaining: 0 }), i({ type: "RATE_LIMITED" });
       return;
     }
-    if (!a.ok)
-      throw new Error(`HTTP ${a.status}`);
-    const i = a.body.getReader(), n = new TextDecoder();
+    if (!t.ok)
+      throw new Error(`HTTP ${t.status}`);
+    const u = t.body.getReader(), s = new TextDecoder();
     let o = "", p = "";
     for (; ; ) {
-      const { done: y, value: m } = await i.read();
-      if (y) break;
-      o += n.decode(m, { stream: !0 });
-      const S = o.split(`
+      const { done: f, value: m } = await u.read();
+      if (f) break;
+      o += s.decode(m, { stream: !0 });
+      const E = o.split(`
 `);
-      o = S.pop() || "";
-      for (const g of S)
-        if (g.startsWith("data: "))
+      o = E.pop() || "";
+      for (const d of E)
+        if (d.startsWith("data: "))
           try {
-            const c = JSON.parse(g.slice(6));
-            await d(c), c.type === "content" && (p += c.text);
+            const c = JSON.parse(d.slice(6));
+            await h(c), c.type === "content" && (p += c.text);
           } catch {
           }
     }
-    h(p, `${e}/${t}`);
-  } catch (a) {
-    await s({
+    S(p, `${e}/${a}`);
+  } catch (t) {
+    await r({
       status: "error",
-      error: a.message ?? "Scan failed. Please try again."
-    }), r({ type: "SCAN_ERROR", error: a.message });
+      error: t.message ?? "Scan failed. Please try again."
+    }), i({ type: "SCAN_ERROR", error: t.message });
   }
 }
-async function d(e) {
-  const t = await u();
+async function h(e) {
+  const a = await n();
   switch (e.type) {
     case "status":
-      await s({
-        remaining: e.remaining ?? t.remaining,
+      await r({
+        remaining: e.remaining ?? a.remaining,
         lines: [
-          ...t.lines,
+          ...a.lines,
           { type: "status", text: e.message, cls: "blue" }
         ]
       });
       break;
     case "stack":
-      await s({ tags: e.tags });
+      await r({ tags: e.tags });
       break;
     case "skills":
-      await s({ skills: e.skills });
+      await r({ skills: e.skills });
       break;
     case "content":
-      await s({ markFile: t.markFile + e.text });
+      await r({ markFile: a.markFile + e.text });
       break;
     case "done":
-      await s({
+      await r({
         status: "done",
         zipBase64: e.zipBase64,
         markFile: e.markFile,
         tags: e.tags,
         skills: e.skills,
-        remaining: e.remaining ?? t.remaining,
+        remaining: e.remaining ?? a.remaining,
         lines: [
-          ...t.lines,
+          ...a.lines,
           { type: "done", text: "→ Complete ✓", cls: "green" }
         ]
       });
       break;
     case "error":
-      await s({ status: "error", error: e.message });
+      await r({ status: "error", error: e.message });
       break;
   }
-  r({ type: "STATE_UPDATE", data: e });
+  i({ type: "STATE_UPDATE", data: e });
 }
-async function h(e, t) {
+async function S(e, a) {
   try {
-    const a = await u(), i = await fetch(T, {
+    const t = await n(), s = await (await fetch(k, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ markFile: e, repoName: t, stack: a.tags })
-    }), { ideas: n } = await i.json();
-    await s({ ideas: n }), r({ type: "IDEAS_READY", ideas: n });
-  } catch {
+      body: JSON.stringify({ markFile: e, repoName: a, stack: t.tags })
+    })).json();
+    if (s.error) {
+      await r({ ideasError: `Failed: ${s.error}` }), i({ type: "IDEAS_ERROR", error: s.error });
+      return;
+    }
+    await r({ ideas: s.ideas, ideasError: void 0 }), i({ type: "IDEAS_READY", ideas: s.ideas });
+  } catch (t) {
+    await r({ ideasError: (t == null ? void 0 : t.message) ?? "Failed to generate opportunities" }), i({ type: "IDEAS_ERROR", error: t == null ? void 0 : t.message });
   }
 }
-async function u() {
+async function _() {
+  const e = await n();
+  !e.markFile || !e.repoName || (await r({ ideasError: void 0 }), await S(e.markFile, e.repoName));
+}
+async function n() {
   return (await chrome.storage.local.get("scanState")).scanState ?? l;
 }
-async function s(e) {
-  const t = await u();
-  await chrome.storage.local.set({ scanState: { ...t, ...e } });
+async function r(e) {
+  const a = await n();
+  await chrome.storage.local.set({ scanState: { ...a, ...e } });
 }
-function r(e) {
+function i(e) {
   chrome.runtime.sendMessage(e).catch(() => {
   });
 }
