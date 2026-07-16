@@ -4,6 +4,7 @@ import { useEffect, useReducer } from 'react'
 import { ExtensionPopupCanvas } from '../canvas/ExtensionPopupCanvas'
 import { IdeaCard } from '../ui/IdeaCard'
 import { ProgressBar } from '../ui/ProgressBar'
+import { MascotPanel } from '../ui/MascotPanel'
 import { useAutoAdvanceTabs } from '@/lib/hooks/useAutoAdvanceTabs'
 import { useScrollReveal } from '@/lib/hooks/useScrollReveal'
 import {
@@ -118,10 +119,11 @@ export function DemoSection() {
       id="demo"
       className="py-20 px-10 bg-paper"
     >
-      <div className="max-w-[1080px] mx-auto">
+      <div className="max-w-[1080px] mx-auto grid md:grid-cols-[minmax(0,640px)_1fr] grid-cols-1 gap-12 items-center">
+        <div className="min-w-0">
         <div
           ref={headerRef}
-          className={`flex flex-col items-center text-center mb-10 transition-all duration-700 ${
+          className={`flex flex-col items-start text-left mb-10 transition-all duration-700 ${
             headerVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
           }`}
         >
@@ -143,7 +145,7 @@ export function DemoSection() {
 
         <div
           ref={tabsRef}
-          className={`max-w-[640px] mx-auto transition-all duration-700 ${
+          className={`max-w-[640px] transition-all duration-700 ${
             tabsVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
           }`}
         >
@@ -217,6 +219,8 @@ export function DemoSection() {
           </div>
         </div>
       </div>
+      <MascotPanel />
+    </div>
     </section>
   )
 }

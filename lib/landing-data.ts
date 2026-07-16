@@ -116,6 +116,21 @@ export const IDEAS: IdeaItem[] = [
   },
 ]
 
+export interface MascotBadge {
+  label: string
+  bg: string
+  fg: string
+  bd: string
+  style: Record<string, string>
+  delay: string
+}
+
+export const MASCOT_BADGES: MascotBadge[] = [
+  { label: 'scanning repo…', bg: '#EBF2FF', fg: '#1A47A8', bd: '#C3D7F7', style: { top: '6%', left: '-4%' }, delay: '0s' },
+  { label: '8 skills matched ✓', bg: '#E9F5E9', fg: '#1B6B28', bd: '#B6DEB9', style: { top: '30%', right: '-8%' }, delay: '.8s' },
+  { label: '$MARK', bg: '#F7F6F3', fg: '#888785', bd: '#E5E3DC', style: { bottom: '12%', left: '-2%' }, delay: '1.6s' },
+]
+
 export const TICKER_ITEMS = [
   { repo: 'vercel/next.js', ticker: '$DEPLOY' },
   { repo: 'ggerganov/whisper.cpp', ticker: '$SPACES' },
