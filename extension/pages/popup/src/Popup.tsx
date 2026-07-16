@@ -216,7 +216,7 @@ export default function Popup() {
             </>
           )}
           {state.status === 'scanning' && (
-            <div className="scanning-indicator">Scanning...</div>
+            <div className="scanning-indicator">{getScanStatusText(state)}</div>
           )}
           {state.status === 'idle' && (
             <div className="remaining-footer">{state.remaining}/5 scans remaining today</div>
@@ -229,6 +229,48 @@ export default function Popup() {
 
 function GlassZone({ state }: { state: ScanState }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [skillCount, setSkillCount] = useState(0);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    if (state.skills.length > skillCount) {
+      let current = skillCount;
+      const target = state.skills.length;
+      const increment = () => {
+        if (current < target) {
+          current++;
+          setSkillCount(current);
+          setTimeout(increment, 80);
+        }
+      };
+      increment();
+    }
+  }, [state.skills.length, skillCount]);
+
+  useEffect(() => {
+    if (state.status === 'scanning') {
+      const startTime = Date.now();
+      const duration = 25000;
+      const updateProgress = () => {
+        const elapsed = Date.now() - startTime;
+        let newProgress = Math.min((elapsed / duration) * 90, 90);
+        
+        if (state.tags.length > 0 && newProgress < 50) newProgress = 50;
+        if (state.skills.length > 0 && newProgress < 70) newProgress = 70;
+        
+        setProgress(newProgress);
+        
+        if (newProgress < 90 && state.status === 'scanning') {
+          requestAnimationFrame(updateProgress);
+        }
+      };
+      requestAnimationFrame(updateProgress);
+    } else if (state.status === 'done') {
+      setProgress(100);
+    } else {
+      setProgress(0);
+    }
+  }, [state.status, state.tags.length, state.skills.length]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -256,28 +298,42 @@ function GlassZone({ state }: { state: ScanState }) {
     }
 
     let animationId: number;
+    let time = 0;
 
     function animate() {
       if (!ctx || !canvas) return;
       ctx.clearRect(0, 0, 360, 140);
+      time += 0.01;
+
+      const speedMultiplier = state.status === 'scanning' ? 1.5 : 0.3;
+      const opacityBase = state.status === 'done' ? 0.3 : 0.5;
+      const hasBluePhase = state.status === 'scanning' && state.tags.length > 0 && state.skills.length === 0;
 
       blobs.forEach(blob => {
-        blob.x += blob.vx;
-        blob.y += blob.vy;
+        blob.x += blob.vx * speedMultiplier;
+        blob.y += blob.vy * speedMultiplier;
 
         if (blob.x < 0 || blob.x > 360) blob.vx *= -1;
         if (blob.y < 0 || blob.y > 140) blob.vy *= -1;
 
-        const gradient = ctx.createRadialGradient(blob.x, blob.y, 0, blob.x, blob.y, blob.radius);
-        gradient.addColorStop(0, 'hsla(42, 18%, 98%, 0.5)');
-        gradient.addColorStop(1, 'hsla(42, 18%, 95%, 0.2)');
+        const breathingRadius = blob.radius + Math.sin(time * 2) * (state.status === 'scanning' ? 4 : 1);
+
+        const gradient = ctx.createRadialGradient(blob.x, blob.y, 0, blob.x, blob.y, breathingRadius);
+        
+        if (hasBluePhase) {
+          gradient.addColorStop(0, `hsla(220, 60%, 75%, ${opacityBase + 0.1})`);
+          gradient.addColorStop(1, `hsla(220, 50%, 70%, ${opacityBase * 0.4})`);
+        } else {
+          gradient.addColorStop(0, `hsla(42, 18%, 98%, ${opacityBase})`);
+          gradient.addColorStop(1, `hsla(42, 18%, 95%, ${opacityBase * 0.4})`);
+        }
 
         ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.arc(blob.x, blob.y, blob.radius, 0, Math.PI * 2);
+        ctx.arc(blob.x, blob.y, breathingRadius, 0, Math.PI * 2);
         ctx.fill();
 
-        ctx.strokeStyle = 'rgba(200, 198, 192, 0.22)';
+        ctx.strokeStyle = hasBluePhase ? 'rgba(195, 215, 247, 0.3)' : 'rgba(200, 198, 192, 0.22)';
         ctx.lineWidth = 0.5;
         ctx.stroke();
       });
@@ -285,32 +341,44 @@ function GlassZone({ state }: { state: ScanState }) {
       animationId = requestAnimationFrame(animate);
     }
 
-    if (state.status === 'scanning') {
+    if (state.status === 'scanning' || state.status === 'done') {
       animate();
     }
 
     return () => cancelAnimationFrame(animationId);
-  }, [state.status]);
+  }, [state.status, state.tags.length, state.skills.length]);
+
+  const statusClass = state.status === 'done' ? 'done' : state.status === 'scanning' ? 'active' : '';
 
   return (
     <div className="glass-zone">
       <canvas ref={canvasRef} className="glass-canvas" />
       <div className="glass-overlay">
-        <div className="scan-status">{getScanStatusText(state.status)}</div>
+        <div className={`scan-status ${statusClass}`}>{getScanStatusText(state)}</div>
         <div className="chip-row">
           {state.tags.slice(0, 4).map((tag, i) => (
-            <span key={i} className="chip" style={{ animationDelay: `${i * 50}ms` }}>
+            <span key={tag} className="chip" style={{ animationDelay: `${i * 80}ms` }}>
               {tag}
             </span>
           ))}
-          {state.skills.length > 0 && (
-            <span className="chip chip-accent">{state.skills.length} skills</span>
+          {state.status === 'scanning' && state.skills.length === 0 && state.tags.length > 0 && (
+            <span className="chip chip-skeleton" style={{ animationDelay: `${state.tags.slice(0, 4).length * 80}ms` }}>
+              ···
+            </span>
+          )}
+          {skillCount > 0 && (
+            <span 
+              className={`chip chip-accent ${state.status === 'scanning' ? 'chip-glowing' : ''}`}
+              style={{ animationDelay: `${state.tags.slice(0, 4).length * 80}ms` }}
+            >
+              {skillCount} skill{skillCount !== 1 ? 's' : ''}
+            </span>
           )}
         </div>
       </div>
       <div
-        className="scan-progress"
-        style={{ width: state.status === 'scanning' ? '0%' : state.status === 'done' ? '100%' : '0%' }}
+        className={`scan-progress ${state.status === 'done' ? 'done' : ''}`}
+        style={{ width: `${progress}%` }}
       />
     </div>
   );
@@ -448,15 +516,16 @@ function IdeaCard({ idea, delay }: { idea: BuildIdea; delay: number }) {
   );
 }
 
-function getScanStatusText(status: ScanState['status']): string {
-  const map: Record<ScanState['status'], string> = {
-    idle: 'Ready to scan',
-    scanning: 'Scanning...',
-    done: 'Scan complete ✓',
-    error: 'Scan failed',
-    rate_limited: 'Limit reached',
-  };
-  return map[status];
+function getScanStatusText(state: ScanState): string {
+  if (state.status === 'error') return 'Scan failed';
+  if (state.status === 'rate_limited') return 'Limit reached';
+  if (state.status === 'done') return 'Scan complete';
+  if (state.status === 'scanning') {
+    if (state.skills.length > 0) return 'Matching skills';
+    if (state.tags.length > 0) return 'Detecting stack';
+    return 'Scanning repo';
+  }
+  return 'Ready to scan';
 }
 
 function base64ToBlob(base64: string, type: string): Blob {
