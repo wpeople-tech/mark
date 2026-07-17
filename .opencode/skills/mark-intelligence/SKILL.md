@@ -11,7 +11,7 @@ description: Use for developing MARK Intelligence — a Next.js 16 landing page 
 1. Generates a **CLAUDE.md** (repo intelligence report with architecture, stack, patterns, skill files)
 2. Generates **3 Build Opportunities** (utility website ideas for pump.fun launch)
 
-**Domain:** markintel.xyz | **Token:** $MARK on pump.fun | **Deployment:** Vercel Hobby Plan
+**Domain:** markintel.tech | **Token:** $MARK on pump.fun | **Deployment:** Vercel Hobby Plan
 
 ### Target Audience
 Crypto builders who scroll GitHub for interesting repos, build utility websites on top, and launch tokens on pump.fun.
@@ -104,7 +104,7 @@ Nav backdrop:      backdrop-filter: blur(12px)
 ## Project Structure
 
 ```
-markintel.xyz/
+markintel.tech/
 ├── app/
 │   ├── layout.tsx           ← Root layout (Geist font, metadata)
 │   ├── page.tsx             ← Landing page (client component with animations)
@@ -209,7 +209,7 @@ extension/
 ### Key Extension Details
 - **Manifest V3**
 - **Permissions:** storage, tabs, activeTab
-- **Host permissions:** github.com/*, markintel.xyz/*
+- **Host permissions:** github.com/*, markintel.tech/*
 - **Content script:** Runs on `https://github.com/*/*`, extracts owner/repo from URL, saves to `chrome.storage.local`
 - **Popup:** 360px wide, React, shows scan status, tabs (Mark File / Build Opportunities), download buttons
 - **Service worker:** Handles START_SCAN message, reads SSE stream from /api/forge, updates chrome.storage, broadcasts to popup via `chrome.runtime.sendMessage`
@@ -224,7 +224,7 @@ extension/
 | Function duration | 10s default, 60s max (via vercel.json) |
 | Functions per project | 12 (we use 2) |
 | Bandwidth | 100 GB/month |
-| Custom domain | 1 per project (markintel.xyz) |
+| Custom domain | 1 per project (markintel.tech) |
 
 ### vercel.json (REQUIRED)
 ```json
@@ -242,7 +242,7 @@ ANTHROPIC_API_KEY=sk-ant-...
 GITHUB_TOKEN=ghp_...
 UPSTASH_REDIS_REST_URL=https://...upstash.io
 UPSTASH_REDIS_REST_TOKEN=AXxx...
-NEXT_PUBLIC_APP_URL=https://markintel.xyz
+NEXT_PUBLIC_APP_URL=https://markintel.tech
 ```
 
 ### Costs (MVP)

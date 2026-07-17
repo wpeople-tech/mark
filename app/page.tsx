@@ -7,6 +7,7 @@ import { TickerSection } from '@/components/landing/sections/TickerSection'
 import { DemoSection } from '@/components/landing/sections/DemoSection'
 import { HowItWorksSection } from '@/components/landing/sections/HowItWorksSection'
 import { FeaturesSection } from '@/components/landing/sections/FeaturesSection'
+import { SkillsSection } from '@/components/landing/sections/SkillsSection'
 import { TokenSection } from '@/components/landing/sections/TokenSection'
 import { Footer } from '@/components/landing/sections/Footer'
 import { InstallGuide } from '@/components/landing/ui/InstallGuide'
@@ -48,6 +49,7 @@ export default function Home() {
       <DemoSection />
       <HowItWorksSection />
       <FeaturesSection />
+      <SkillsSection />
       <TokenSection />
       <Footer />
       <InstallGuide visible={guideVisible} onClose={hideGuide} />

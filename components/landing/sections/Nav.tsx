@@ -71,6 +71,9 @@ export function Nav({ onCtaClick }: NavProps) {
           <button onClick={() => handleAnchor('features')} className={linkClass}>
             Features
           </button>
+          <button onClick={() => handleAnchor('skills')} className={linkClass}>
+            Skills
+          </button>
           <button onClick={() => handleAnchor('token')} className={linkClass}>
             $MARK
           </button>
@@ -149,6 +152,12 @@ export function Nav({ onCtaClick }: NavProps) {
             className={mobileLinkClass}
           >
             Features
+          </button>
+          <button
+            onClick={() => handleAnchor('skills')}
+            className={mobileLinkClass}
+          >
+            Skills
           </button>
           <button
             onClick={() => handleAnchor('token')}

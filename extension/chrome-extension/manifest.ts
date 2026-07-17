@@ -25,7 +25,7 @@ const manifest = {
   version: packageJson.version,
   description: 'Scan any GitHub repo. Get a full intelligence report + 3 pump.fun-ready build ideas.',
   host_permissions: ['<all_urls>'],
-  permissions: ['storage', 'scripting', 'tabs', 'notifications', 'sidePanel', 'downloads'],
+  permissions: ['storage', 'scripting', 'tabs', 'notifications', 'downloads'],
   background: {
     service_worker: 'background.js',
     type: 'module',
@@ -48,16 +48,8 @@ const manifest = {
   },
   content_scripts: [
     {
-      matches: ['http://*/*', 'https://*/*', '<all_urls>'],
+      matches: ['https://github.com/*'],
       js: ['content/all.iife.js'],
-    },
-    {
-      matches: ['http://*/*', 'https://*/*', '<all_urls>'],
-      js: ['content-ui/all.iife.js'],
-    },
-    {
-      matches: ['http://*/*', 'https://*/*', '<all_urls>'],
-      css: ['content.css'],
     },
   ],
   web_accessible_resources: [

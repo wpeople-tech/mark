@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     description:
       "Scan any GitHub repo. Get 3 pump.fun-ready ideas.",
     images: [{ url: "/og-image.png", width: 1200, height: 630 }],
-    url: "https://markintel.xyz",
+    url: "https://markintel.tech",
   },
   twitter: {
     card: "summary_large_image",

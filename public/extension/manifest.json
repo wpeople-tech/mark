@@ -12,7 +12,6 @@
     "scripting",
     "tabs",
     "notifications",
-    "sidePanel",
     "downloads"
   ],
   "background": {
@@ -37,32 +36,10 @@
   "content_scripts": [
     {
       "matches": [
-        "http://*/*",
-        "https://*/*",
-        "<all_urls>"
+        "https://github.com/*"
       ],
       "js": [
         "content/all.iife.js"
-      ]
-    },
-    {
-      "matches": [
-        "http://*/*",
-        "https://*/*",
-        "<all_urls>"
-      ],
-      "js": [
-        "content-ui/all.iife.js"
-      ]
-    },
-    {
-      "matches": [
-        "http://*/*",
-        "https://*/*",
-        "<all_urls>"
-      ],
-      "css": [
-        "content.css"
       ]
     }
   ],
