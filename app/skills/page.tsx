@@ -102,7 +102,7 @@ export default function SkillsPage() {
           </Link>
           <span className="text-[13px] text-ink font-medium">Skills</span>
           <Link href="/#token" className="text-[13px] text-muted transition-colors hover:text-ink">
-            $MARK
+            
           </Link>
         </div>
         <Link
@@ -221,7 +221,7 @@ export default function SkillsPage() {
       {/* FOOTER */}
       <footer className="py-6 px-10 border-t border-border flex items-center justify-between flex-wrap gap-4">
         <div className="text-[12px] text-muted font-mono">
-          markintel.xyz · free · $MARK
+          markintel.xyz · free · 
         </div>
         <Link
           href="/"

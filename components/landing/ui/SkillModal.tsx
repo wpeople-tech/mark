@@ -1,7 +1,8 @@
 'use client'
 
 import { useCallback, useMemo } from 'react'
-import { LVL_STYLE } from '@/lib/landing-data'
+import Link from 'next/link'
+import { LVL_STYLE, slugify } from '@/lib/landing-data'
 import type { SkillDefinition } from '@/lib/landing-data'
 
 interface SkillModalProps {
@@ -121,9 +122,12 @@ export function SkillModal({ skill, copied, onClose, onCopy }: SkillModalProps) 
         </div>
 
         <div className="flex gap-[10px] flex-wrap">
-          <button className="text-[13px] font-semibold px-6 py-3 rounded-md bg-accent text-white border-none transition-opacity hover:opacity-88">
+          <Link
+            href={`/skills/${slugify(name)}`}
+            className="text-[13px] font-semibold px-6 py-3 rounded-md bg-accent text-white border-none transition-opacity hover:opacity-88 inline-flex items-center"
+          >
             Full details →
-          </button>
+          </Link>
           <button
             onClick={onCopy}
             className="text-[13px] font-semibold px-6 py-3 rounded-md bg-white text-ink border border-border transition-colors hover:border-ink"

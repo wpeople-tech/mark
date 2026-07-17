@@ -17,7 +17,7 @@ export function TokenSection() {
         <TokenCanvas />
 
         <div className="text-[10px] tracking-[.15em] uppercase text-[#555] mb-4 relative">
-          $MARK ON PUMP.FUN
+           ON PUMP.FUN
         </div>
 
         <h2
@@ -42,13 +42,13 @@ export function TokenSection() {
         </p>
 
         <div className="flex gap-2 flex-wrap justify-center mb-10 relative">
-          {['$MARK', 'Solana', 'pump.fun', 'fair launch', 'no team tokens'].map((tag) => (
+          {['Solana', 'pump.fun', 'fair launch', 'no team tokens'].map((tag) => (
             <span
               key={tag}
               className="text-[11px] font-mono px-[14px] py-[5px] rounded-pill"
               style={{
                 border: '.5px solid #333',
-                color: tag === '$MARK' ? '#888' : '#555',
+                color: tag === '' ? '#888' : '#555',
               }}
             >
               {tag}
@@ -62,7 +62,7 @@ export function TokenSection() {
           rel="noopener noreferrer"
           className="inline-flex text-[13px] font-semibold px-7 py-[14px] rounded-md bg-paper text-ink no-underline transition-opacity duration-150 relative hover:opacity-88"
         >
-          Buy $MARK on pump.fun →
+          Buy on pump.fun →
         </a>
       </div>
     </section>

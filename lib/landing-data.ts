@@ -128,7 +128,7 @@ export interface MascotBadge {
 export const MASCOT_BADGES: MascotBadge[] = [
   { label: 'scanning repo…', bg: '#EBF2FF', fg: '#1A47A8', bd: '#C3D7F7', style: { top: '6%', left: '-4%' }, delay: '0s' },
   { label: '8 skills matched ✓', bg: '#E9F5E9', fg: '#1B6B28', bd: '#B6DEB9', style: { top: '30%', right: '-8%' }, delay: '.8s' },
-  { label: '$MARK', bg: '#F7F6F3', fg: '#888785', bd: '#E5E3DC', style: { bottom: '12%', left: '-2%' }, delay: '1.6s' },
+  { label: '', bg: '#F7F6F3', fg: '#888785', bd: '#E5E3DC', style: { bottom: '12%', left: '-2%' }, delay: '1.6s' },
 ]
 
 export const TICKER_ITEMS = [
@@ -155,9 +155,9 @@ export const SKILL_CATS = [
 export type SkillLevel = keyof typeof LVL_STYLE
 
 export const LVL_STYLE = {
-  beginner: { fg: '#1B6B28', bg: '#E9F5E9', bd: '#B6DEB9' },
-  intermediate: { fg: '#8a6d1a', bg: '#FBF4DF', bd: '#E8D9A8' },
-  advanced: { fg: '#7a2f2f', bg: '#F9E9E9', bd: '#E5C3C3' },
+  beginner: { fg: '#1B6B28', bg: '#E9F5E9', bd: '#B6DEB9', dark: '#6DBE8A' },
+  intermediate: { fg: '#8a6d1a', bg: '#FBF4DF', bd: '#E8D9A8', dark: '#E8C56A' },
+  advanced: { fg: '#7a2f2f', bg: '#F9E9E9', bd: '#E5C3C3', dark: '#e09a9a' },
 } as const
 
 export type SkillDefinition = [string, string, string, string, string[]]
@@ -223,3 +223,58 @@ export const SKILL_DB: SkillDefinition[] = [
   ['AI / LLM', 'advanced', 'MCP Server Integration', 'Building and integrating MCP servers with Claude Code.', ['mcp', 'claude-code', 'ai']],
   ['AI / LLM', 'beginner', 'Karpathy Coding Principles', "Andrej Karpathy's core coding philosophy adapted for Claude Code workflows.", ['universal', 'claude-code']],
 ]
+
+const slugCache = new Map<string, string>()
+
+export function slugify(s: string): string {
+  const cached = slugCache.get(s)
+  if (cached) return cached
+  const slug = s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+  slugCache.set(s, slug)
+  return slug
+}
+
+export function getSkillBySlug(slug: string): SkillDefinition | undefined {
+  return SKILL_DB.find((k) => slugify(k[2]) === slug)
+}
+
+export function getRelatedSkills(
+  category: string,
+  excludeName: string,
+  limit = 3,
+): SkillDefinition[] {
+  return SKILL_DB.filter((k) => k[0] === category && k[2] !== excludeName).slice(0, limit)
+}
+
+export function getNextSkillInCategory(
+  category: string,
+  currentName: string,
+): SkillDefinition | null {
+  const inCat = SKILL_DB.filter((k) => k[0] === category)
+  const idx = inCat.findIndex((k) => k[2] === currentName)
+  return idx >= 0 && idx < inCat.length - 1 ? inCat[idx + 1] : null
+}
+
+export function getSkillPosition(
+  category: string,
+  currentName: string,
+): { pos: number; total: number; globalIdx: number } {
+  const inCat = SKILL_DB.filter((k) => k[0] === category)
+  const pos = inCat.findIndex((k) => k[2] === currentName) + 1
+  const globalIdx = SKILL_DB.findIndex((k) => k[2] === currentName)
+  return { pos, total: inCat.length, globalIdx }
+}
+
+export function skillPreview(k: SkillDefinition): string[] {
+  const [, , , desc, tags] = k
+  const words = desc
+    .replace(/\.$/, '')
+    .split(/[,—:]/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 3)
+  return [
+    ...words.map((w) => w[0].toUpperCase() + w.slice(1)),
+    `Applied automatically when MARK detects ${tags[0]} in your repo`,
+  ]
+}

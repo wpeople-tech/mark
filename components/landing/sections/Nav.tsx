@@ -162,7 +162,7 @@ export function Nav({ onCtaClick }: NavProps) {
             onClick={() => handleAnchor('token')}
             className={mobileLinkClass}
           >
-            $MARK
+            
           </button>
           <button
             onClick={handleCtaClick}
