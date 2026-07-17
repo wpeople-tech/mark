@@ -1,79 +1,90 @@
-'use client'
+"use client";
 
-import { useRouter } from 'next/navigation'
-import { useMagneticButton } from '@/lib/hooks/useMagneticButton'
-import { useNavScroll } from '@/lib/hooks/useNavScroll'
-import { useMobileNav } from '@/lib/hooks/useMobileNav'
+import { useRouter } from "next/navigation";
+import { useMagneticButton } from "@/lib/hooks/useMagneticButton";
+import { useNavScroll } from "@/lib/hooks/useNavScroll";
+import { useMobileNav } from "@/lib/hooks/useMobileNav";
+import Image from "next/image";
 
 interface NavProps {
-  onCtaClick?: () => void
+  onCtaClick?: () => void;
 }
 
 export function Nav({ onCtaClick }: NavProps) {
-  const router = useRouter()
-  const navStyle = useNavScroll()
-  const { isOpen, toggle, close } = useMobileNav()
+  const router = useRouter();
+  const navStyle = useNavScroll();
+  const { isOpen, toggle, close } = useMobileNav();
   const {
     ref: ctaRef,
     style: ctaStyle,
     handleMouseMove: ctaMove,
     handleMouseLeave: ctaLeave,
-  } = useMagneticButton()
+  } = useMagneticButton();
 
   const handleCtaClick = () => {
-    close()
-    onCtaClick?.()
-  }
+    close();
+    onCtaClick?.();
+  };
 
   const handleAnchor = (id: string) => {
-    close()
-    const el = document.getElementById(id)
+    close();
+    const el = document.getElementById(id);
     if (el) {
       window.scrollTo({
         top: el.getBoundingClientRect().top + window.scrollY - 58,
-        behavior: 'smooth',
-      })
+        behavior: "smooth",
+      });
     }
-  }
+  };
 
   const linkClass =
-    'text-[13px] text-muted transition-colors duration-150 hover:text-ink cursor-pointer'
+    "text-[13px] text-muted transition-colors duration-150 hover:text-ink cursor-pointer";
   const mobileLinkClass =
-    'text-[24px] font-medium text-paper hover:text-term-blue transition-colors'
+    "text-[24px] font-medium text-paper hover:text-term-blue transition-colors";
 
   return (
     <>
       <nav
         className="fixed top-0 left-0 right-0 z-100 flex items-center justify-between px-10 h-[58px]"
         style={{
-          background: 'rgba(247,246,243,.88)',
-          backdropFilter: 'blur(12px)',
-          borderBottom: '.5px solid rgba(229,227,220,.7)',
-          transition: 'transform .4s cubic-bezier(.16,1,.3,1)',
+          background: "rgba(247,246,243,.88)",
+          backdropFilter: "blur(12px)",
+          borderBottom: ".5px solid rgba(229,227,220,.7)",
+          transition: "transform .4s cubic-bezier(.16,1,.3,1)",
           ...navStyle,
         }}
       >
         <div className="flex items-center gap-[10px]">
-          <div className="size-7 rounded-[7px] bg-ink flex items-center justify-center text-[13px] font-bold text-paper">
-            M
-          </div>
+          <Image
+            src="/mark-image.png"
+            width={20}
+            height={20}
+            alt="logo"
+            className="size-7 bg-ink rounded-[7px] flex items-center justify-center text-[13px] font-bold text-paper"
+          />
           <span className="text-[14px] font-bold tracking-[-.02em] text-ink">
-            MARK{' '}
-            <span className="font-normal text-muted text-[11px] tracking-[.07em] uppercase ml-[5px]">
-              Intelligence
-            </span>
+            MARK
           </span>
         </div>
 
         {/* Desktop nav links */}
         <div className="items-center gap-8 hidden md:flex">
-          <button onClick={() => handleAnchor('demo')} className={linkClass}>
+          <button onClick={() => handleAnchor("demo")} className={linkClass}>
             How it works
           </button>
-          <button onClick={() => handleAnchor('features')} className={linkClass}>
+          <button
+            onClick={() => handleAnchor("features")}
+            className={linkClass}
+          >
             Features
           </button>
-          <button onClick={() => { close(); router.push('/skills') }} className={linkClass}>
+          <button
+            onClick={() => {
+              close();
+              router.push("/skills");
+            }}
+            className={linkClass}
+          >
             Skills
           </button>
         </div>
@@ -113,7 +124,9 @@ export function Nav({ onCtaClick }: NavProps) {
               className="block h-[2px] rounded-sm bg-ink transition-all duration-300"
               style={{
                 width: 22,
-                transform: isOpen ? 'rotate(45deg) translate(5px, 5px)' : 'rotate(0)',
+                transform: isOpen
+                  ? "rotate(45deg) translate(5px, 5px)"
+                  : "rotate(0)",
               }}
             />
             <span
@@ -127,7 +140,9 @@ export function Nav({ onCtaClick }: NavProps) {
               className="block h-[2px] rounded-sm bg-ink transition-all duration-300"
               style={{
                 width: 22,
-                transform: isOpen ? 'rotate(-45deg) translate(5px, -5px)' : 'rotate(0)',
+                transform: isOpen
+                  ? "rotate(-45deg) translate(5px, -5px)"
+                  : "rotate(0)",
               }}
             />
           </button>
@@ -138,32 +153,33 @@ export function Nav({ onCtaClick }: NavProps) {
       {isOpen && (
         <div
           className="fixed inset-0 z-99 flex flex-col items-center justify-center gap-10 bg-ink md:hidden"
-          style={{ animation: 'fadeIn .25s ease both' }}
+          style={{ animation: "fadeIn .25s ease both" }}
         >
           <button
-            onClick={() => handleAnchor('demo')}
+            onClick={() => handleAnchor("demo")}
             className={mobileLinkClass}
           >
             How it works
           </button>
           <button
-            onClick={() => handleAnchor('features')}
+            onClick={() => handleAnchor("features")}
             className={mobileLinkClass}
           >
             Features
           </button>
           <button
-            onClick={() => { close(); router.push('/skills') }}
+            onClick={() => {
+              close();
+              router.push("/skills");
+            }}
             className={mobileLinkClass}
           >
             Skills
           </button>
           <button
-            onClick={() => handleAnchor('token')}
+            onClick={() => handleAnchor("token")}
             className={mobileLinkClass}
-          >
-            
-          </button>
+          ></button>
           <button
             onClick={handleCtaClick}
             className="text-[16px] font-semibold px-8 py-3 rounded-pill bg-paper text-ink border-none mt-4"
@@ -173,5 +189,5 @@ export function Nav({ onCtaClick }: NavProps) {
         </div>
       )}
     </>
-  )
+  );
 }
