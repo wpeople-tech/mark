@@ -50,7 +50,7 @@ export default function Home() {
       <HowItWorksSection />
       <FeaturesSection />
       <SkillsSection />
-      <TokenSection />
+      {/* <TokenSection /> */}
       <Footer />
       <InstallGuide visible={guideVisible} onClose={hideGuide} />
     </>
