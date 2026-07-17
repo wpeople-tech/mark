@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MARK Intelligence — Read any repo. Find your next build.",
+  title: "MARK",
   description:
     "Scan any GitHub repo in 30 seconds. Get a full intelligence report + 3 pump.fun-ready utility website ideas.",
   openGraph: {

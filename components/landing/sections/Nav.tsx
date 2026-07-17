@@ -1,5 +1,6 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { useMagneticButton } from '@/lib/hooks/useMagneticButton'
 import { useNavScroll } from '@/lib/hooks/useNavScroll'
 import { useMobileNav } from '@/lib/hooks/useMobileNav'
@@ -9,6 +10,7 @@ interface NavProps {
 }
 
 export function Nav({ onCtaClick }: NavProps) {
+  const router = useRouter()
   const navStyle = useNavScroll()
   const { isOpen, toggle, close } = useMobileNav()
   const {
@@ -71,11 +73,8 @@ export function Nav({ onCtaClick }: NavProps) {
           <button onClick={() => handleAnchor('features')} className={linkClass}>
             Features
           </button>
-          <button onClick={() => handleAnchor('skills')} className={linkClass}>
+          <button onClick={() => { close(); router.push('/skills') }} className={linkClass}>
             Skills
-          </button>
-          <button onClick={() => handleAnchor('token')} className={linkClass}>
-            $MARK
           </button>
         </div>
 
@@ -154,7 +153,7 @@ export function Nav({ onCtaClick }: NavProps) {
             Features
           </button>
           <button
-            onClick={() => handleAnchor('skills')}
+            onClick={() => { close(); router.push('/skills') }}
             className={mobileLinkClass}
           >
             Skills
