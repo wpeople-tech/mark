@@ -134,8 +134,7 @@ export function HeroSection({ onCtaClick, onScrollToDemo }: HeroSectionProps) {
             transform: "translateY(12px)",
           }}
         >
-          yang subtext disitu tolong diganti dengan ini mas Point MARK at any
-          GitHub repository. Get a full intelligence report, a production-ready
+          Point MARK at any GitHub repository. Get a full intelligence report, a production-ready
           CLAUDE.md, and three viable utility concepts with a pump.fun launch
           angle.
         </p>
