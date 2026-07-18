@@ -7,7 +7,7 @@ Generated for: ${owner}/${repo}
 
 ## Quick Start
 1. Copy CLAUDE.md to your project root
-2. Add the skill files to .claude/skills/
+2. Add the skill files to .claude/skills/ (each skill in its own folder with SKILL.md)
 3. Run: claude code
 
 ## Selected Skills (${skills.length}/59)
@@ -36,7 +36,7 @@ export async function buildZip(
   for (const skill of skills) {
     const content = SKILL_CONTENT[skill]
     if (content) {
-      files[`.claude/skills/${skill}.md`] = strToU8(content)
+      files[`.claude/skills/${skill}/SKILL.md`] = strToU8(content)
     }
   }
 
