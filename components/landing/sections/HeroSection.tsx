@@ -18,6 +18,7 @@ export function HeroSection({ onCtaClick, onScrollToDemo }: HeroSectionProps) {
   const [termCount, setTermCount] = useState(0);
   const [termDone, setTermDone] = useState(false);
   const [fillsOn, setFillsOn] = useState(false);
+  const [copied, setCopied] = useState(false);
   const {
     ref: ctaRef,
     style: ctaStyle,
@@ -186,6 +187,73 @@ export function HeroSection({ onCtaClick, onScrollToDemo }: HeroSectionProps) {
           >
             See demo ↓
           </button>
+        </div>
+
+        {/* CA */}
+        <div
+          className="mt-5 flex items-center gap-2 text-[12px] font-mono opacity-0"
+          style={{
+            animation: "blurIn .7s cubic-bezier(.16,1,.3,1) .76s forwards",
+            filter: "blur(6px)",
+            transform: "translateY(12px)",
+          }}
+        >
+          <span className="text-muted text-[10px] tracking-[.1em] uppercase font-medium not-mono">
+            CA
+          </span>
+          <button
+            onClick={async () => {
+              await navigator.clipboard.writeText("H4EdmmVMD7sofVwknBotimqLmV3ALXxdvw3A3bZkpump");
+              setCopied(true);
+              setTimeout(() => setCopied(false), 2000);
+            }}
+            className="text-ink bg-transparent border-none px-2 py-1 rounded-sm cursor-pointer inline-flex items-center gap-1.5 transition-colors duration-150 hover:bg-surface"
+            title="Click to copy"
+          >
+            <span>
+              H4EdmmVMD7sofVwknBotimqLmV3ALXxdvw3A3bZk
+            </span>
+            {copied ? (
+              <svg
+                width="12"
+                height="12"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                viewBox="0 0 24 24"
+                className="text-green shrink-0"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            ) : (
+              <svg
+                width="12"
+                height="12"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                viewBox="0 0 24 24"
+                className="text-muted shrink-0"
+              >
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+            )}
+          </button>
+          {copied && (
+            <span
+              className="text-[10px] text-green animate-pulse"
+              style={{
+                animation: "fadeIn .3s ease both",
+              }}
+            >
+              Copied!
+            </span>
+          )}
         </div>
 
         {/* Trust line */}
