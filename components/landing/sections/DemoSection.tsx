@@ -219,7 +219,7 @@ export function DemoSection() {
           </div>
         </div>
       </div>
-      <MascotPanel />
+      <MascotPanel isThree />
     </div>
     </section>
   )
