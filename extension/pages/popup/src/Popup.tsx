@@ -1,4 +1,5 @@
 import './Popup.css';
+import RepoScore from './components/RepoScore';
 import { useEffect, useRef, useState } from 'react';
 import type { BuildIdea, RepoInfo, ScanState } from '@extension/shared';
 
@@ -50,7 +51,9 @@ export default function Popup() {
     console.log('[MARK Popup] Registering message listener');
     const listener = (msg: any) => {
       console.log('[MARK Popup] Received message:', msg.type);
-      if (['STATE_UPDATE', 'SCAN_STARTED', 'IDEAS_READY', 'IDEAS_ERROR', 'RATE_LIMITED', 'SCAN_ERROR'].includes(msg.type)) {
+      if (
+        ['STATE_UPDATE', 'SCAN_STARTED', 'IDEAS_READY', 'IDEAS_ERROR', 'RATE_LIMITED', 'SCAN_ERROR'].includes(msg.type)
+      ) {
         chrome.storage.local.get('scanState', result => {
           console.log('[MARK Popup] scanState from storage:', result.scanState?.status);
           if (result.scanState) setState(result.scanState);
@@ -120,12 +123,18 @@ export default function Popup() {
           <div className="logo-dot" />
           <span>MARK</span>
         </div>
-        {repo && <div className="popup-repo">{repo.owner}/{repo.repo}</div>}
+        {repo && (
+          <div className="popup-repo">
+            {repo.owner}/{repo.repo}
+          </div>
+        )}
       </div>
 
       <GlassZone state={state} />
 
       <div className="popup-body">
+        {repo && <RepoScore repo={repo} />}
+
         {!repo && state.status === 'idle' && (
           <div className="manual-repo">
             <div className="manual-label">Enter a GitHub repo URL</div>
@@ -137,17 +146,11 @@ export default function Popup() {
                 onChange={e => setInputUrl(e.target.value)}
                 onKeyDown={handleInputKeyDown}
               />
-              <button
-                className="scan-btn"
-                disabled={!inputParsed}
-                onClick={handleManualScan}
-              >
+              <button className="scan-btn" disabled={!inputParsed} onClick={handleManualScan}>
                 Scan
               </button>
             </div>
-            {!inputUrl && (
-              <div className="manual-hint">Open a GitHub repo or paste a URL above</div>
-            )}
+            {!inputUrl && <div className="manual-hint">Open a GitHub repo or paste a URL above</div>}
           </div>
         )}
 
@@ -168,11 +171,7 @@ export default function Popup() {
           </div>
         )}
 
-        {state.status === 'error' && (
-          <div className="error-msg">
-            {state.error || 'Scan failed. Please try again.'}
-          </div>
-        )}
+        {state.status === 'error' && <div className="error-msg">{state.error || 'Scan failed. Please try again.'}</div>}
 
         {(state.status === 'scanning' || state.status === 'done') && (
           <>
@@ -186,12 +185,8 @@ export default function Popup() {
             </div>
 
             <div className="tab-content">
-              {activeTab === 'mark' && (
-                <MarkFileTab state={state} onDownload={handleDownload} />
-              )}
-              {activeTab === 'ideas' && (
-                <IdeasTab state={state} onRetry={handleRetryOpportunities} />
-              )}
+              {activeTab === 'mark' && <MarkFileTab state={state} onDownload={handleDownload} />}
+              {activeTab === 'ideas' && <IdeasTab state={state} onRetry={handleRetryOpportunities} />}
             </div>
           </>
         )}
@@ -215,12 +210,8 @@ export default function Popup() {
               </div>
             </>
           )}
-          {state.status === 'scanning' && (
-            <div className="scanning-indicator">{getScanStatusText(state)}</div>
-          )}
-          {state.status === 'idle' && (
-            <div className="remaining-footer">{state.remaining}/5 scans remaining today</div>
-          )}
+          {state.status === 'scanning' && <div className="scanning-indicator">{getScanStatusText(state)}</div>}
+          {state.status === 'idle' && <div className="remaining-footer">{state.remaining}/5 scans remaining today</div>}
         </div>
       )}
     </div>
@@ -254,12 +245,12 @@ function GlassZone({ state }: { state: ScanState }) {
       const updateProgress = () => {
         const elapsed = Date.now() - startTime;
         let newProgress = Math.min((elapsed / duration) * 90, 90);
-        
+
         if (state.tags.length > 0 && newProgress < 50) newProgress = 50;
         if (state.skills.length > 0 && newProgress < 70) newProgress = 70;
-        
+
         setProgress(newProgress);
-        
+
         if (newProgress < 90 && state.status === 'scanning') {
           requestAnimationFrame(updateProgress);
         }
@@ -319,7 +310,7 @@ function GlassZone({ state }: { state: ScanState }) {
         const breathingRadius = blob.radius + Math.sin(time * 2) * (state.status === 'scanning' ? 4 : 1);
 
         const gradient = ctx.createRadialGradient(blob.x, blob.y, 0, blob.x, blob.y, breathingRadius);
-        
+
         if (hasBluePhase) {
           gradient.addColorStop(0, `hsla(220, 60%, 75%, ${opacityBase + 0.1})`);
           gradient.addColorStop(1, `hsla(220, 50%, 70%, ${opacityBase * 0.4})`);
@@ -367,19 +358,15 @@ function GlassZone({ state }: { state: ScanState }) {
             </span>
           )}
           {skillCount > 0 && (
-            <span 
+            <span
               className={`chip chip-accent ${state.status === 'scanning' ? 'chip-glowing' : ''}`}
-              style={{ animationDelay: `${state.tags.slice(0, 4).length * 80}ms` }}
-            >
+              style={{ animationDelay: `${state.tags.slice(0, 4).length * 80}ms` }}>
               {skillCount} skill{skillCount !== 1 ? 's' : ''}
             </span>
           )}
         </div>
       </div>
-      <div
-        className={`scan-progress ${state.status === 'done' ? 'done' : ''}`}
-        style={{ width: `${progress}%` }}
-      />
+      <div className={`scan-progress ${state.status === 'done' ? 'done' : ''}`} style={{ width: `${progress}%` }} />
     </div>
   );
 }
@@ -420,9 +407,7 @@ function MarkFileTab({ state, onDownload }: { state: ScanState; onDownload: () =
             <span className="file-icon">📁</span>
             <div>
               <div className="file-name">mark-output.zip</div>
-              <div className="file-tags">
-                CLAUDE.md + {state.skills.length} skills + setup guide
-              </div>
+              <div className="file-tags">CLAUDE.md + {state.skills.length} skills + setup guide</div>
             </div>
             <span className="dl-icon">↓</span>
           </div>

@@ -5,6 +5,7 @@ import { Nav } from '@/components/landing/sections/Nav'
 import { HeroSection } from '@/components/landing/sections/HeroSection'
 import { TickerSection } from '@/components/landing/sections/TickerSection'
 import { DemoSection } from '@/components/landing/sections/DemoSection'
+import { ScoreSection } from '@/components/landing/sections/ScoreSection'
 import { HowItWorksSection } from '@/components/landing/sections/HowItWorksSection'
 import { FeaturesSection } from '@/components/landing/sections/FeaturesSection'
 import { SkillsSection } from '@/components/landing/sections/SkillsSection'
@@ -47,6 +48,7 @@ export default function Home() {
       <HeroSection onCtaClick={handleCta} onScrollToDemo={scrollToDemo} />
       <TickerSection />
       <DemoSection />
+      <ScoreSection />
       <HowItWorksSection />
       <FeaturesSection />
       <SkillsSection />

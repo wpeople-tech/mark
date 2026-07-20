@@ -45,3 +45,43 @@ export interface ScanState {
   error?: string;
   ideasError?: string;
 }
+
+// --- Repo Score Types ---
+
+export interface RepoData {
+  stars: number;
+  forks: number;
+  lastPushedAt: string;
+  topics: string[];
+  description: string;
+  isFork: boolean;
+  contributorsCount: number;
+  manifestFiles: string[];
+  hasRelease: boolean;
+  daysSinceLastPush: number;
+}
+
+export interface RepoScoreBreakdown {
+  traction: number;
+  activity: number;
+  buildability: number;
+  narrativeFit: number;
+  uniqueness: number;
+}
+
+export interface RepoScore {
+  total: number;
+  label: string;
+  color: string;
+  breakdown: RepoScoreBreakdown;
+  bullets: string[];
+}
+
+export interface RepoScoreState {
+  status: 'idle' | 'loading' | 'success' | 'error';
+  data?: RepoScore;
+  error?: {
+    code: number;
+    message: string;
+  };
+}

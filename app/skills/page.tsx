@@ -6,6 +6,7 @@ import { SKILL_DB, SKILL_CATS } from '@/lib/landing-data'
 import type { SkillDefinition } from '@/lib/landing-data'
 import { SkillCard } from '@/components/landing/ui/SkillCard'
 import { SkillModal } from '@/components/landing/ui/SkillModal'
+import { Nav } from '@/components/landing/sections/Nav'
 
 export default function SkillsPage() {
   const [skillCat, setSkillCat] = useState('All')
@@ -74,44 +75,7 @@ export default function SkillsPage() {
   return (
     <>
       {/* NAV */}
-      <nav
-        className="fixed top-0 left-0 right-0 z-100 flex items-center justify-between px-10 h-[58px]"
-        style={{
-          background: 'rgba(247,246,243,.88)',
-          backdropFilter: 'blur(12px)',
-          borderBottom: '.5px solid rgba(229,227,220,.7)',
-        }}
-      >
-        <Link href="/" className="flex items-center gap-[10px] text-ink">
-          <div className="size-7 rounded-[7px] bg-ink flex items-center justify-center text-[13px] font-bold text-paper">
-            M
-          </div>
-          <span className="text-[14px] font-bold tracking-[-.02em] text-ink">
-            MARK{' '}
-            <span className="font-normal text-muted text-[11px] tracking-[.07em] uppercase ml-[5px]">
-              Intelligence
-            </span>
-          </span>
-        </Link>
-        <div className="flex items-center gap-8">
-          <Link href="/#demo" className="text-[13px] text-muted transition-colors hover:text-ink">
-            How it works
-          </Link>
-          <Link href="/#features" className="text-[13px] text-muted transition-colors hover:text-ink">
-            Features
-          </Link>
-          <span className="text-[13px] text-ink font-medium">Skills</span>
-          <Link href="/#token" className="text-[13px] text-muted transition-colors hover:text-ink">
-            
-          </Link>
-        </div>
-        <Link
-          href="/"
-          className="text-[12px] font-semibold px-5 py-[9px] rounded-pill bg-ink text-paper tracking-[.01em] transition-opacity hover:opacity-85"
-        >
-          ← Back to home
-        </Link>
-      </nav>
+      <Nav />
 
       {/* HEADER */}
       <section

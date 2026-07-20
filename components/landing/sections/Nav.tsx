@@ -5,6 +5,7 @@ import { useMagneticButton } from "@/lib/hooks/useMagneticButton";
 import { useNavScroll } from "@/lib/hooks/useNavScroll";
 import { useMobileNav } from "@/lib/hooks/useMobileNav";
 import Image from "next/image";
+import Link from "next/link";
 
 interface NavProps {
   onCtaClick?: () => void;
@@ -54,7 +55,10 @@ export function Nav({ onCtaClick }: NavProps) {
           ...navStyle,
         }}
       >
-        <div className="flex items-center gap-[10px]">
+        <Link 
+          className="flex items-center gap-[10px]"
+          href={"/"}
+        >
           <Image
             src="/mark-image.png"
             width={20}
@@ -65,7 +69,7 @@ export function Nav({ onCtaClick }: NavProps) {
           <span className="text-[14px] font-bold tracking-[-.02em] text-ink">
             MARK
           </span>
-        </div>
+        </Link>
 
         {/* Desktop nav links */}
         <div className="items-center gap-8 hidden md:flex">

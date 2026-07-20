@@ -1,4 +1,4 @@
-var g = { CEB_API_BASE: "https://mark-orpin.vercel.app" };
+var g = { CEB_API_BASE: "https://markintel.tech" };
 const y = g.CEB_API_BASE, w = `${y}/api/forge`, k = `${y}/api/opportunities`, l = {
   status: "idle",
   lines: [],
